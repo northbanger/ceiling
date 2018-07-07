@@ -1,0 +1,33 @@
+{
+  "name": "ceiling",
+  "version": "1.4.16",
+  "description": "An extensible Node.js library and command-line tool to sync databases and files between endpoints",
+  "main": "src/ceiling.js",
+  "author": "Sebastian Landwehr",
+  "license": "MIT",
+  "bin": {
+    "ceiling": "./src/bash.js"
+  },
+  "scripts": {
+    "test": "jasmine src/**/*.spec.js",
+    "deploy": "deploy-node-module"
+  },
+  "dependencies": {
+    "commander": "^2.12.2",
+    "find-up": "^3.0.0",
+    "lodash": "^4.17.10",
+    "mongodb": "^3.0.5",
+    "mysqldump-search-replace": "^1.0.5",
+    "not-null": "^1.0.1",
+    "prompt-confirm": "^1.2.0",
+    "twig": "^1.10.5"
+  },
+  "devDependencies": {
+    "console-mock2": "^0.2.1",
+    "deploy-node-module": "^1.0.4",
+    "jasmine": "^3.1.0",
+    "mongo-in-memory": "0.0.5",
+    "test-console": "^1.1.0",
+    "tmp": "0.0.33"
+  }
+}
