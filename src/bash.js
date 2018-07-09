@@ -38,7 +38,7 @@ program.command('push <endpoint>')
   .option('-y, --yes', 'do not ask for confirmation')
   .action((endpointName, options) => confirm('local', endpointName, options).then(yes => {
     if (yes) {
-      ceiling.push(endpointName)
+      cli.push(endpointName)
     }
   }))
 
@@ -47,7 +47,7 @@ program.command('pull <endpoint>')
   .option('-y, --yes', 'do not ask for confirmation')
   .action((endpointName, options) => confirm(endpointName, 'local', options).then(yes => {
     if (yes) {
-      ceiling.pull(endpointName)
+      cli.pull(endpointName)
     }
   }))
 

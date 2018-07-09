@@ -1,6 +1,5 @@
-const NoProvidersError = require('./no-providers-error')
 const _ = require('lodash')
-const EndpointNotFoundError = require('./endpoint-not-found-error')
+const notnull = require('not-null')
 
 class Ceiling {
 
@@ -18,11 +17,7 @@ class Ceiling {
   }
 
   getEndpoint(endpointName, syncProviderName) {
-    const result = this.endpoints[endpointName]
-    if (result == null) {
-      throw new EndpointNotFoundError(endpointName)
-    }
-    return result[syncProviderName]
+    return notnull(this.endpoints[endpointName], {})[syncProviderName]
   }
 
   validate(endpoint) {
@@ -31,22 +26,33 @@ class Ceiling {
 
   _sync(operation, endpointName) {
     if (_.isEmpty(this.syncProviders)) {
-      throw new NoProvidersError()
+      console.log('No sync providers defined. Doing nothing ...')
     }
 
     return Promise.all(_.values(_.mapValues(this.syncProviders, (syncProvider, syncProviderName) => {
       const fromEndpoint = this.getEndpoint(operation == Ceiling.PUSH ? 'local' : endpointName, syncProviderName)
       const toEndpoint = this.getEndpoint(operation == Ceiling.PUSH ? endpointName : 'local', syncProviderName)
-      console.log(`${syncProvider.endpointToString(fromEndpoint)} => ${syncProvider.endpointToString(toEndpoint)} ...`)
-      return syncProvider.sync(fromEndpoint, toEndpoint)
+      const endpointToString = notnull(syncProvider.endpointToString, JSON.stringify)
+      console.log(`${endpointToString.call(syncProvider, fromEndpoint)} => ${endpointToString.call(syncProvider, toEndpoint)} ...`)
+
+      if (syncProvider.sync == null) {
+        console.log(`Sync function missing for sync provider '${syncProviderName}'. Doing nothing ...`)
+      } else {
+        try {
+          return syncProvider.sync(fromEndpoint, toEndpoint)
+        } catch (err) {
+          return new Promise((resolve, reject) => reject(err))
+        }
+      }
     })))
+      .catch(err => console.log(err.message))
   }
 
-  push(endpointName) {
+  push(endpointName = 'live') {
     return this._sync(Ceiling.PUSH, endpointName)
   }
 
-  pull(endpointName) {
+  pull(endpointName = 'live') {
     return this._sync(Ceiling.PULL, endpointName)
   }
 }

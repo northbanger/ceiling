@@ -11,7 +11,7 @@ class Cli {
     return this.ceiling.push(endpointName)
   }
 
-  pull() {
+  pull(endpointName) {
     return this.ceiling.pull(endpointName)
   }
 

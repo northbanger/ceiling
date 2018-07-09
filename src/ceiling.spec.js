@@ -1,7 +1,6 @@
 const Ceiling = require('./ceiling')
-const NoProvidersError = require('./no-providers-error')
-const EndpointNotFoundError = require('./endpoint-not-found-error')
 const stdout = require("test-console").stdout
+const consoleMock = require('console-mock2')
 
 describe('Ceiling', () => {
 
@@ -9,40 +8,35 @@ describe('Ceiling', () => {
 
     it('no providers', () => {
       const ceiling = new Ceiling()
-      expect(() => ceiling.push()).toThrow(new NoProvidersError())
+      expect(stdout.inspectSync(() => ceiling.push())).toEqual([
+        'No sync providers defined. Doing nothing ...\n'
+      ])
     })
 
-    it('local endpoint missing', () => {
+    it('one sync provider with missing endpointToString', () => {
       const ceiling = new Ceiling({
         syncProviders: {
-          foo: {},
-        }
-      })
-      expect(() => ceiling.push()).toThrow(new EndpointNotFoundError('local'))
-    })
-
-    it('remote endpoint missing', () => {
-      const ceiling = new Ceiling({
-        syncProviders: {
-          foo: {},
+          mysql: {
+            sync() {
+            }
+          },
         },
-        endpoints: {
-          local: {},
-        }
       })
-      expect(() => ceiling.push('remote')).toThrow(new EndpointNotFoundError('remote'))
+      expect(stdout.inspectSync(() => ceiling.push('live'))).toEqual([
+        'undefined => undefined ...\n'
+      ])
     })
 
-    it('remote endpoint missing', () => {
+    it('one sync provider with missing sync', () => {
       const ceiling = new Ceiling({
         syncProviders: {
-          foo: {},
+          mysql: {},
         },
-        endpoints: {
-          local: {},
-        }
       })
-      expect(() => ceiling.push('live')).toThrow(new EndpointNotFoundError('live'))
+      expect(stdout.inspectSync(() => ceiling.push('live'))).toEqual([
+        'undefined => undefined ...\n',
+        `Sync function missing for sync provider 'mysql'. Doing nothing ...\n`
+      ])
     })
 
     it('one sync provider', () => {
@@ -133,40 +127,21 @@ describe('Ceiling', () => {
 
     it('no providers', () => {
       const ceiling = new Ceiling()
-      expect(() => ceiling.pull()).toThrow(new NoProvidersError())
+      expect(stdout.inspectSync(() => ceiling.pull())).toEqual([
+        'No sync providers defined. Doing nothing ...\n'
+      ])
     })
 
-    it('local endpoint missing', () => {
+    it('one sync provider with missing sync', () => {
       const ceiling = new Ceiling({
         syncProviders: {
-          foo: {},
-        },
-        endpoints: {
-          live: {},
-        }
-      })
-      expect(() => ceiling.pull('live')).toThrow(new EndpointNotFoundError('local'))
-    })
-
-    it('remote endpoint missing', () => {
-      const ceiling = new Ceiling({
-        syncProviders: {
-          foo: {},
+          mysql: {},
         },
       })
-      expect(() => ceiling.pull('live')).toThrow(new EndpointNotFoundError('live'))
-    })
-
-    it('remote endpoint missing', () => {
-      const ceiling = new Ceiling({
-        syncProviders: {
-          foo: {},
-        },
-        endpoints: {
-          local: {},
-        }
-      })
-      expect(() => ceiling.pull('live')).toThrow(new EndpointNotFoundError('live'))
+      expect(stdout.inspectSync(() => ceiling.pull('live'))).toEqual([
+        'undefined => undefined ...\n',
+        `Sync function missing for sync provider 'mysql'. Doing nothing ...\n`
+      ])
     })
 
     it('one sync provider', () => {
@@ -246,6 +221,50 @@ describe('Ceiling', () => {
         'mongodb://mongodb-live.de => mongodb://mongodb-local.de ...\n'
       ])
       expect(data).toEqual(2)
+    })
+
+    it('error inside sync provider sync', done => {
+      const ceiling = new Ceiling({
+        syncProviders: {
+          mysql: {
+            sync(from, to) {
+              throw new Error('foo')
+            }
+          },
+        },
+      })
+      const inspect = stdout.inspect()
+      ceiling.pull('live')
+        .then(() => {
+          inspect.restore()
+          expect(inspect.output).toEqual([
+            'undefined => undefined ...\n',
+            'foo\n',
+          ])
+        })
+        .then(done)
+    })
+
+    it('error inside sync provider async', done => {
+      const ceiling = new Ceiling({
+        syncProviders: {
+          mysql: {
+            sync(from, to) {
+              return new Promise((resolve, reject) => reject(new Error('foo')))
+            }
+          },
+        },
+      })
+      const inspect = stdout.inspect()
+      ceiling.pull('live')
+        .then(() => {
+          inspect.restore()
+          expect(inspect.output).toEqual([
+            'undefined => undefined ...\n',
+            'foo\n',
+          ])
+        })
+        .then(done)
     })
   })
 })
