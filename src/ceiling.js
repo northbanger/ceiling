@@ -1,7 +1,6 @@
 const NoProvidersError = require('./no-providers-error')
 const _ = require('lodash')
 const EndpointNotFoundError = require('./endpoint-not-found-error')
-const Confirm = require('prompt-confirm')
 
 class Ceiling {
 
