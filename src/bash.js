@@ -3,6 +3,7 @@
 const program = require('commander')
 const Cli = require('./cli')
 const path = require('path')
+const findUp = require('find-up')
 
 const cli = new Cli({
   config: process.cwd() + '/' + path.relative(process.cwd(), findUp.sync('ceiling.config.js'))

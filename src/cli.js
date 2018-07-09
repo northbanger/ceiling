@@ -1,5 +1,3 @@
-const findUp = require('find-up')
-const path = require('path')
 const Ceiling = require('./ceiling')
 const _ = require('lodash')
 
