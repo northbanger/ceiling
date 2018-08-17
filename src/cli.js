@@ -15,6 +15,10 @@ class Cli {
     return this.ceiling.pull(endpointName)
   }
 
+  migrate(endpointName) {
+    return this.ceiling.migrate(endpointName)
+  }
+
   confirmString(fromEndpointName, toEndpointName) {
     return `Are you sure you want to ...\n` + _.values(_.mapValues(this.ceiling.syncProviders,
       (syncProvider, syncProviderName) => {
