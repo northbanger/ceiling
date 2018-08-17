@@ -1,5 +1,6 @@
 const _ = require('lodash')
 const notnull = require('not-null')
+const sequential = require('promise-sequential')
 
 class Ceiling {
 
@@ -63,33 +64,35 @@ class Ceiling {
   }
 
   migrate(endpointName = 'local') {
-    return Promise.all(
+    return sequential(
       _(this.migrations)
-        .mapValues((migrations, syncProviderName) => {
+        .mapValues((migrations, syncProviderName) => () => {
           try {
             const syncProvider = this.syncProviders[syncProviderName]
             const endpoint = this.getEndpoint(endpointName, syncProviderName)
             const endpointToString = notnull(syncProvider.endpointToString, JSON.stringify)
             const migrationsToExecute = _.omit(
-              notnull(this.migrations[syncProviderName], {}),
+              notnull(migrations, {}),
               syncProvider.getExecutedMigrations != null
                 ? syncProvider.getExecutedMigrations(endpoint)
                 : []
             )
-            console.log(`Migrating ${endpointToString.call(syncProvider, endpoint)} ...`)
-            return Promise.all(
-              _(migrationsToExecute)
-                .mapValues((migration, name) => {
-                  console.log(name)
-                  return migration.up(
-                    syncProvider.getMigrationParams != null
-                      ? syncProvider.getMigrationParams(endpoint)
-                      : {}
-                  )
-                })
-                .values()
-                .value()
-            )
+            return Promise.resolve()
+              .then(() => console.log(`Migrating ${endpointToString.call(syncProvider, endpoint)} ...`))
+              .then(() => sequential(
+                _(migrationsToExecute)
+                  .mapValues((migration, name) => () => {
+                    console.log(name)
+                    return migration.up(
+                      syncProvider.getMigrationParams != null
+                        ? syncProvider.getMigrationParams(endpoint)
+                        : {}
+                    )
+                  })
+                  .values()
+                  .value()
+                )
+              )
           } catch (err) {
             return new Promise(({}, reject) => reject(err))
           }

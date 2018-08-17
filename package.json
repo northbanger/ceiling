@@ -18,6 +18,7 @@
     "lodash": "^4.17.10",
     "mysqldump-search-replace": "^1.0.5",
     "not-null": "^1.0.1",
+    "promise-sequential": "^1.1.1",
     "prompt-confirm": "^1.2.0",
     "twig": "^1.10.5"
   },

@@ -264,39 +264,38 @@ describe('Ceiling', () => {
 
   describe('migrate', () => {
 
-    it('no providers', () => {
+    it('no providers', done => {
       const ceiling = new Ceiling()
-      expect(stdout.inspectSync(() => ceiling.pull())).toEqual([
-        'No sync providers defined. Doing nothing ...\n'
-      ])
+      const inspect = stdout.inspect()
+      ceiling.migrate()
+        .then(() => inspect.restore())
+        .then(() => expect(inspect.output).toEqual([]))
+        .then(done)
     })
 
-    it('no migrations', () => {
+    it('no migrations', done => {
       const ceiling = new Ceiling({
         syncProviders: {
           mysql: {},
         },
       })
-      expect(stdout.inspectSync(() => ceiling.migrate('local'))).toEqual([])
+      const inspect = stdout.inspect()
+      ceiling.migrate('local')
+        .then(() => inspect.restore())
+        .then(() => expect(inspect.output).toEqual([]))
+        .then(done)
     })
 
-    it('one sync provider', () => {
-      var data = { a: 1, b: 1 }
+    it('one sync provider', done => {
       const ceiling = new Ceiling({
         migrations: {
           mysql: {
             1: {
               up({ db }) {
                 expect(db).toEqual('db')
-                data = { ...data, a: 2 }
+                console.log('up 1')
               }
             },
-            2: {
-              up({ db }) {
-                expect(db).toEqual('db')
-                data = { ...data, b: 2 }
-              }
-            }
           }
         },
         syncProviders: {
@@ -318,15 +317,18 @@ describe('Ceiling', () => {
           },
         }
       })
-      expect(stdout.inspectSync(() => ceiling.migrate('local'))).toEqual([
-        'Migrating mysql://local.de ...\n',
-        '1\n',
-        '2\n',
-      ])
-      expect(data).toEqual({ a: 2, b: 2 })
+      const inspect = stdout.inspect()
+      ceiling.migrate('local')
+        .then(() => inspect.restore())
+        .then(() => expect(inspect.output).toEqual([
+          'Migrating mysql://local.de ...\n',
+          '1\n',
+          'up 1\n',
+        ]))
+        .then(done)
     })
 
-    it('two sync providers', () => {
+    it('two sync providers', done => {
       const ceiling = new Ceiling({
         migrations: {
           mysql: {
@@ -367,14 +369,18 @@ describe('Ceiling', () => {
           },
         }
       })
-      expect(stdout.inspectSync(() => ceiling.migrate('local'))).toEqual([
-        'Migrating mysql://mysql-local.de ...\n',
-        '1\n',
-        'mysql up 1\n',
-        'Migrating mongodb://mongodb-local.de ...\n',
-        '1\n',
-        'mongodb up 1\n',
-      ])
+      const inspect = stdout.inspect()
+      ceiling.migrate('local')
+        .then(() => inspect.restore())
+        .then(() => expect(inspect.output).toEqual([
+          'Migrating mysql://mysql-local.de ...\n',
+          '1\n',
+          'mysql up 1\n',
+          'Migrating mongodb://mongodb-local.de ...\n',
+          '1\n',
+          'mongodb up 1\n',
+        ]))
+        .then(done)
     })
 
     it('error inside sync provider sync', done => {
@@ -394,14 +400,12 @@ describe('Ceiling', () => {
       })
       const inspect = stdout.inspect()
       ceiling.migrate('local')
-        .then(() => {
-          inspect.restore()
-          expect(inspect.output).toEqual([
-            'Migrating undefined ...\n',
-            '1\n',
-            'foo\n',
-          ])
-        })
+        .then(() => inspect.restore())
+        .then(() => expect(inspect.output).toEqual([
+          'Migrating undefined ...\n',
+          '1\n',
+          'foo\n',
+        ]))
         .then(done)
     })
 
@@ -422,14 +426,12 @@ describe('Ceiling', () => {
       })
       const inspect = stdout.inspect()
       ceiling.migrate('local')
-        .then(() => {
-          inspect.restore()
-          expect(inspect.output).toEqual([
-            'Migrating undefined ...\n',
-            '1\n',
-            'foo\n',
-          ])
-        })
+        .then(() => inspect.restore())
+        .then(() => expect(inspect.output).toEqual([
+          'Migrating undefined ...\n',
+          '1\n',
+          'foo\n',
+        ]))
         .then(done)
     })
 
@@ -459,14 +461,61 @@ describe('Ceiling', () => {
       })
       const inspect = stdout.inspect()
       ceiling.migrate('local')
-        .then(() => {
-          inspect.restore()
-          expect(inspect.output).toEqual([
-            'Migrating undefined ...\n',
-            '2\n',
-            'up 2\n',
-          ])
-        })
+        .then(() => inspect.restore())
+        .then(() => expect(inspect.output).toEqual([
+          'Migrating undefined ...\n',
+          '2\n',
+          'up 2\n',
+        ]))
+        .then(done)
+    })
+
+    it('sequential', done => {
+      const ceiling = new Ceiling({
+        migrations: {
+          mysql: {
+            1: {
+              up() {
+                return new Promise(resolve => setTimeout(resolve))
+                  .then(console.log('up 1'))
+              }
+            },
+            2: {
+              up() {
+                console.log('up 2')
+              }
+            },
+          }
+        },
+        syncProviders: {
+          mysql: {
+            endpointToString(endpoint) {
+              return `mysql://${endpoint.host}`
+            },
+            getMigrationParams(endpoint) {
+              expect(endpoint).toEqual({ host: 'local.de' })
+              return { db: 'db' }
+            },
+          },
+        },
+        endpoints: {
+          local: {
+            mysql: {
+              host: 'local.de'
+            }
+          },
+        }
+      })
+      const inspect = stdout.inspect()
+      ceiling.migrate('local')
+        .then(() => inspect.restore())
+        .then(() => expect(inspect.output).toEqual([
+          'Migrating mysql://local.de ...\n',
+          '1\n',
+          'up 1\n',
+          '2\n',
+          'up 2\n',
+        ]))
         .then(done)
     })
   })
