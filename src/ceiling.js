@@ -93,6 +93,11 @@ class Ceiling {
                   .value()
                 )
               )
+              .then(() => {
+                if (syncProvider.setExecutedMigrations != null) {
+                  return syncProvider.setExecutedMigrations(endpoint, _.keys(migrations))
+                }
+              })
           } catch (err) {
             return new Promise(({}, reject) => reject(err))
           }

@@ -477,7 +477,7 @@ describe('Ceiling', () => {
             1: {
               up() {
                 return new Promise(resolve => setTimeout(resolve))
-                  .then(console.log('up 1'))
+                  .then(() => console.log('up 1'))
               }
             },
             2: {
@@ -515,6 +515,47 @@ describe('Ceiling', () => {
           'up 1\n',
           '2\n',
           'up 2\n',
+        ]))
+        .then(done)
+    })
+
+    it('setExecutedMigrations', done => {
+      const ceiling = new Ceiling({
+        migrations: {
+          mysql: {
+            1: {
+              up() {
+                console.log('up 1')
+              }
+            },
+          }
+        },
+        syncProviders: {
+          mysql: {
+            endpointToString(endpoint) {
+              return `mysql://${endpoint.host}`
+            },
+            setExecutedMigrations(endpoint, migrations) {
+              console.log(`Executed migrations set to ${migrations.join(', ')}`)
+            }
+          },
+        },
+        endpoints: {
+          local: {
+            mysql: {
+              host: 'local.de'
+            }
+          },
+        }
+      })
+      const inspect = stdout.inspect()
+      ceiling.migrate('local')
+        .then(() => inspect.restore())
+        .then(() => expect(inspect.output).toEqual([
+          'Migrating mysql://local.de ...\n',
+          '1\n',
+          'up 1\n',
+          'Executed migrations set to 1\n',
         ]))
         .then(done)
     })
