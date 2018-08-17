@@ -221,7 +221,7 @@ describe('Ceiling', () => {
       const ceiling = new Ceiling({
         syncProviders: {
           mysql: {
-            sync(from, to) {
+            sync() {
               throw new Error('foo')
             }
           },
@@ -281,13 +281,20 @@ describe('Ceiling', () => {
     })
 
     it('one sync provider', () => {
+      var data = { a: 1, b: 1 }
       const ceiling = new Ceiling({
         migrations: {
           mysql: {
             1: {
               up({ db }) {
                 expect(db).toEqual('db')
-                console.log('up 1')
+                data = { ...data, a: 2 }
+              }
+            },
+            2: {
+              up({ db }) {
+                expect(db).toEqual('db')
+                data = { ...data, b: 2 }
               }
             }
           }
@@ -314,8 +321,9 @@ describe('Ceiling', () => {
       expect(stdout.inspectSync(() => ceiling.migrate('local'))).toEqual([
         'Migrating mysql://local.de ...\n',
         '1\n',
-        'up 1\n',
+        '2\n',
       ])
+      expect(data).toEqual({ a: 2, b: 2 })
     })
 
     it('two sync providers', () => {
