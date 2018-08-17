@@ -71,15 +71,14 @@ class Ceiling {
             const syncProvider = this.syncProviders[syncProviderName]
             const endpoint = this.getEndpoint(endpointName, syncProviderName)
             const endpointToString = notnull(syncProvider.endpointToString, JSON.stringify)
-            const migrationsToExecute = _.omit(
-              notnull(migrations, {}),
-              syncProvider.getExecutedMigrations != null
-                ? syncProvider.getExecutedMigrations(endpoint)
-                : []
-            )
             return Promise.resolve()
               .then(() => console.log(`Migrating ${endpointToString.call(syncProvider, endpoint)} ...`))
-              .then(() => sequential(
+              .then(() => syncProvider.getExecutedMigrations != null
+                ? syncProvider.getExecutedMigrations(endpoint)
+                : Promise.resolve([])
+              )
+              .then(executedMigrations => _.omit(notnull(migrations, {}), executedMigrations))
+              .then(migrationsToExecute => sequential(
                 _(migrationsToExecute)
                   .mapValues((migration, name) => () => {
                     return Promise.resolve()
