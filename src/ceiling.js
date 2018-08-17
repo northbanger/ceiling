@@ -12,6 +12,7 @@ class Ceiling {
 
   constructor(obj) {
     this.syncProviders = {}
+    this.migrations = {}
     this.endpoints = {}
     Object.assign(this, obj)
   }
@@ -69,8 +70,16 @@ class Ceiling {
             if (syncProvider.migrate != null) {
               const endpoint = this.getEndpoint(endpointName, syncProviderName)
               const endpointToString = notnull(syncProvider.endpointToString, JSON.stringify)
+              const executedMigrations = syncProvider.getExecutedMigrations != null
+                ? syncProvider.getExecutedMigrations(endpoint)
+                : []
+              const migrationsToExecute = _.omit(notnull(this.migrations[syncProviderName], {}), executedMigrations)
               console.log(`Migrating ${endpointToString.call(syncProvider, endpoint)} ...`)
-              return syncProvider.migrate(endpoint)
+              console.log(`Migrations to execute: ${!_.isEmpty(migrationsToExecute) ? _.keys(migrationsToExecute).join(', ') : 'none'}`)
+              if (!_.isEmpty(migrationsToExecute)) {
+                return syncProvider.migrate(endpoint, migrationsToExecute)
+              }
+              return Promise.resolve()
             } else {
               return Promise.resolve()
             }
