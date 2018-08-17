@@ -1,6 +1,8 @@
 const _ = require('lodash')
 const notnull = require('not-null')
 const sequential = require('promise-sequential')
+const fs = require('fs')
+const path = require('path')
 
 class Ceiling {
 
@@ -13,7 +15,6 @@ class Ceiling {
 
   constructor(obj) {
     this.syncProviders = {}
-    this.migrations = {}
     this.endpoints = {}
     Object.assign(this, obj)
   }
@@ -63,7 +64,23 @@ class Ceiling {
     return this._sync(Ceiling.PULL, endpointName)
   }
 
+  get migrations() {
+    return (this.migrationsFolder != null && _.isEmpty(notnull(this.inlineMigrations, {})))
+      ? _.zipObject(
+        fs.readdirSync(this.migrationsFolder),
+        fs.readdirSync(this.migrationsFolder)
+          .map(syncProviderFolder => _.zipObject(
+            fs.readdirSync(`${this.migrationsFolder}/${syncProviderFolder}`).map(filename => path.parse(filename).name),
+            fs.readdirSync(`${this.migrationsFolder}/${syncProviderFolder}`).map(
+              filename => require(`${this.migrationsFolder}/${syncProviderFolder}/${path.parse(filename).name}`))
+            )
+          )
+      )
+      : this.inlineMigrations
+  }
+
   migrate(endpointName = 'local') {
+
     return sequential(
       _(this.migrations)
         .mapValues((migrations, syncProviderName) => () => {

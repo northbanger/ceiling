@@ -26,6 +26,7 @@
     "console-mock2": "^0.2.1",
     "deploy-node-module": "^1.0.4",
     "jasmine": "^3.1.0",
+    "mock-fs": "^4.6.0",
     "test-console": "^1.1.0",
     "tmp": "0.0.33"
   }

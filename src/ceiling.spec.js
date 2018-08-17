@@ -1,6 +1,8 @@
 const Ceiling = require('./ceiling')
 const stdout = require("test-console").stdout
 const _ = require('lodash')
+const mockfs = require('mock-fs')
+const fs = require('fs')
 
 describe('Ceiling', () => {
 
@@ -288,7 +290,7 @@ describe('Ceiling', () => {
 
     it('one sync provider', done => {
       const ceiling = new Ceiling({
-        migrations: {
+        inlineMigrations: {
           mysql: {
             1: {
               up({ db }) {
@@ -330,7 +332,7 @@ describe('Ceiling', () => {
 
     it('two sync providers', done => {
       const ceiling = new Ceiling({
-        migrations: {
+        inlineMigrations: {
           mysql: {
             1: {
               up() {
@@ -385,7 +387,7 @@ describe('Ceiling', () => {
 
     it('error inside sync provider sync', done => {
       const ceiling = new Ceiling({
-        migrations: {
+        inlineMigrations: {
           mysql: {
             1: {
               up() {
@@ -411,7 +413,7 @@ describe('Ceiling', () => {
 
     it('error inside sync provider async', done => {
       const ceiling = new Ceiling({
-        migrations: {
+        inlineMigrations: {
           mysql: {
             1: {
               up() {
@@ -437,7 +439,7 @@ describe('Ceiling', () => {
 
     it('executed migrations', done => {
       const ceiling = new Ceiling({
-        migrations: {
+        inlineMigrations: {
           mysql: {
             1: {
               up() {
@@ -472,7 +474,7 @@ describe('Ceiling', () => {
 
     it('sequential', done => {
       const ceiling = new Ceiling({
-        migrations: {
+        inlineMigrations: {
           mysql: {
             1: {
               up() {
@@ -521,7 +523,7 @@ describe('Ceiling', () => {
 
     it('setExecutedMigrations', done => {
       const ceiling = new Ceiling({
-        migrations: {
+        inlineMigrations: {
           mysql: {
             1: {
               up() {
@@ -556,6 +558,35 @@ describe('Ceiling', () => {
           '1\n',
           'up 1\n',
           'Executed migrations set to 1\n',
+        ]))
+        .then(done)
+    })
+
+    it('migrations folder without inline migrations', done => {
+      const ceiling = new Ceiling({
+        migrationsFolder: __dirname + '/migrations',
+        syncProviders: {
+          mysql: {
+            endpointToString(endpoint) {
+              return `mysql://${endpoint.host}`
+            },
+          },
+        },
+        endpoints: {
+          local: {
+            mysql: {
+              host: 'local.de'
+            }
+          },
+        }
+      })
+      const inspect = stdout.inspect()
+      ceiling.migrate('local')
+        .then(() => inspect.restore())
+        .then(() => expect(inspect.output).toEqual([
+          'Migrating mysql://local.de ...\n',
+          '1\n',
+          'up 1\n',
         ]))
         .then(done)
     })
