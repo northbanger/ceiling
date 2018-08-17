@@ -564,7 +564,7 @@ describe('Ceiling', () => {
 
     it('migrations folder without inline migrations', done => {
       const ceiling = new Ceiling({
-        migrationsFolder: __dirname + '/migrations',
+        migrationsFolder: 'src/migrations',
         syncProviders: {
           mysql: {
             endpointToString(endpoint) {

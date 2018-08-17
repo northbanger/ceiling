@@ -54,11 +54,7 @@ program.command('pull <endpoint>')
 program.command('migrate <endpoint>')
   .description('Migrate data at an endpoint')
   .option('-y, --yes', 'do not ask for confirmation')
-  .action((endpointName, options) => confirm(endpointName, 'local', options).then(yes => {
-    if (yes) {
-      cli.migrate(endpointName)
-    }
-  }))
+  .action(endpointName => cli.migrate(endpointName))
 
 if (!process.argv.slice(2).length || !program.commands.find((command) => command.name() == process.argv[2])) {
   program.outputHelp();

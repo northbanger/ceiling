@@ -70,17 +70,16 @@ class Ceiling {
         fs.readdirSync(this.migrationsFolder),
         fs.readdirSync(this.migrationsFolder)
           .map(syncProviderFolder => _.zipObject(
-            fs.readdirSync(`${this.migrationsFolder}/${syncProviderFolder}`).map(filename => path.parse(filename).name),
-            fs.readdirSync(`${this.migrationsFolder}/${syncProviderFolder}`).map(
-              filename => require(`${this.migrationsFolder}/${syncProviderFolder}/${path.parse(filename).name}`))
+            fs.readdirSync(`${process.cwd()}/${this.migrationsFolder}/${syncProviderFolder}`).map(filename => path.parse(filename).name),
+            fs.readdirSync(`${process.cwd()}/${this.migrationsFolder}/${syncProviderFolder}`).map(
+              filename => require(`${process.cwd()}/${this.migrationsFolder}/${syncProviderFolder}/${path.parse(filename).name}`))
             )
           )
       )
-      : this.inlineMigrations
+      : notnull(this.inlineMigrations, {})
   }
 
   migrate(endpointName = 'local') {
-
     return sequential(
       _(this.migrations)
         .mapValues((migrations, syncProviderName) => () => {
