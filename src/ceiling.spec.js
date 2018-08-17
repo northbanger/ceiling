@@ -271,7 +271,7 @@ describe('Ceiling', () => {
       ])
     })
 
-    it('one sync provider with missing migrate', () => {
+    it('no migrations', () => {
       const ceiling = new Ceiling({
         syncProviders: {
           mysql: {},
@@ -285,8 +285,9 @@ describe('Ceiling', () => {
         migrations: {
           mysql: {
             1: {
-              up() {
-                console.log('Migrating 1')
+              up({ db }) {
+                expect(db).toEqual('db')
+                console.log('up 1')
               }
             }
           }
@@ -296,9 +297,9 @@ describe('Ceiling', () => {
             endpointToString(endpoint) {
               return `mysql://${endpoint.host}`
             },
-            migrate(endpoint, migrations) {
+            getMigrationParams(endpoint) {
               expect(endpoint).toEqual({ host: 'local.de' })
-              _.forIn(migrations, migration => migration.up())
+              return { db: 'db' }
             },
           },
         },
@@ -312,8 +313,8 @@ describe('Ceiling', () => {
       })
       expect(stdout.inspectSync(() => ceiling.migrate('local'))).toEqual([
         'Migrating mysql://local.de ...\n',
-        'Migrations to execute: 1\n',
-        'Migrating 1\n'
+        '1\n',
+        'up 1\n',
       ])
     })
 
@@ -323,14 +324,14 @@ describe('Ceiling', () => {
           mysql: {
             1: {
               up() {
-                console.log('Migrating mysql 1')
+                console.log('mysql up 1')
               }
             }
           },
           mongodb: {
             1: {
               up() {
-                console.log('Migrating mongodb 1')
+                console.log('mongodb up 1')
               }
             }
           }
@@ -340,17 +341,11 @@ describe('Ceiling', () => {
             endpointToString(endpoint) {
               return `mysql://${endpoint.host}`
             },
-            migrate({}, migrations) {
-              _.forIn(migrations, migration => migration.up())
-            }
           },
           mongodb: {
             endpointToString(endpoint) {
               return `mongodb://${endpoint.host}`
             },
-            migrate({}, migrations) {
-              _.forIn(migrations, migration => migration.up())
-            }
           },
         },
         endpoints: {
@@ -366,11 +361,11 @@ describe('Ceiling', () => {
       })
       expect(stdout.inspectSync(() => ceiling.migrate('local'))).toEqual([
         'Migrating mysql://mysql-local.de ...\n',
-        'Migrations to execute: 1\n',
-        'Migrating mysql 1\n',
+        '1\n',
+        'mysql up 1\n',
         'Migrating mongodb://mongodb-local.de ...\n',
-        'Migrations to execute: 1\n',
-        'Migrating mongodb 1\n',
+        '1\n',
+        'mongodb up 1\n',
       ])
     })
 
@@ -380,16 +375,13 @@ describe('Ceiling', () => {
           mysql: {
             1: {
               up() {
+                throw new Error('foo')
               }
             }
           },
         },
         syncProviders: {
-          mysql: {
-            migrate() {
-              throw new Error('foo')
-            }
-          },
+          mysql: {},
         },
       })
       const inspect = stdout.inspect()
@@ -398,7 +390,7 @@ describe('Ceiling', () => {
           inspect.restore()
           expect(inspect.output).toEqual([
             'Migrating undefined ...\n',
-            'Migrations to execute: 1\n',
+            '1\n',
             'foo\n',
           ])
         })
@@ -411,16 +403,13 @@ describe('Ceiling', () => {
           mysql: {
             1: {
               up() {
+                return new Promise(({}, reject) => reject(new Error('foo')))
               }
             }
           },
         },
         syncProviders: {
-          mysql: {
-            migrate() {
-              return new Promise(({}, reject) => reject(new Error('foo')))
-            }
-          },
+          mysql: {},
         },
       })
       const inspect = stdout.inspect()
@@ -429,28 +418,8 @@ describe('Ceiling', () => {
           inspect.restore()
           expect(inspect.output).toEqual([
             'Migrating undefined ...\n',
-            'Migrations to execute: 1\n',
+            '1\n',
             'foo\n',
-          ])
-        })
-        .then(done)
-    })
-
-    it('no migrations to execute', done => {
-      const ceiling = new Ceiling({
-        syncProviders: {
-          mysql: {
-            migrate() {},
-          },
-        },
-      })
-      const inspect = stdout.inspect()
-      ceiling.migrate('local')
-        .then(() => {
-          inspect.restore()
-          expect(inspect.output).toEqual([
-            'Migrating undefined ...\n',
-            'Migrations to execute: none\n',
           ])
         })
         .then(done)
@@ -474,9 +443,6 @@ describe('Ceiling', () => {
         },
         syncProviders: {
           mysql: {
-            migrate(endpoint, migrations) {
-              _.forIn(migrations, migration => migration.up())
-            },
             getExecutedMigrations() {
               return [1]
             }
@@ -489,7 +455,7 @@ describe('Ceiling', () => {
           inspect.restore()
           expect(inspect.output).toEqual([
             'Migrating undefined ...\n',
-            'Migrations to execute: 2\n',
+            '2\n',
             'up 2\n',
           ])
         })
