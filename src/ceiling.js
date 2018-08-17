@@ -82,12 +82,13 @@ class Ceiling {
               .then(() => sequential(
                 _(migrationsToExecute)
                   .mapValues((migration, name) => () => {
-                    console.log(name)
-                    return migration.up(
-                      syncProvider.getMigrationParams != null
-                        ? syncProvider.getMigrationParams(endpoint)
-                        : {}
-                    )
+                    return Promise.resolve()
+                      .then(() => console.log(name))
+                      .then(() => migration.up(
+                        syncProvider.getMigrationParams != null
+                          ? syncProvider.getMigrationParams(endpoint)
+                          : {}
+                      ))
                   })
                   .values()
                   .value()
