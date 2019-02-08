@@ -65,16 +65,18 @@ class Ceiling {
   }
 
   get migrations() {
+    const folders = fs.readdirSync(this.migrationsFolder).filter(folder => !folder.startsWith('.'))
     return (this.migrationsFolder != null && _.isEmpty(notnull(this.inlineMigrations, {})))
       ? _.zipObject(
-        fs.readdirSync(this.migrationsFolder),
-        fs.readdirSync(this.migrationsFolder)
-          .map(syncProviderFolder => _.zipObject(
-            fs.readdirSync(`${process.cwd()}/${this.migrationsFolder}/${syncProviderFolder}`).map(filename => path.parse(filename).name),
-            fs.readdirSync(`${process.cwd()}/${this.migrationsFolder}/${syncProviderFolder}`).map(
+        folders,
+        folders.map(syncProviderFolder => {
+          const files = fs.readdirSync(`${process.cwd()}/${this.migrationsFolder}/${syncProviderFolder}`)
+          return _.zipObject(
+            files.map(filename => path.parse(filename).name),
+            files.map(
               filename => require(`${process.cwd()}/${this.migrationsFolder}/${syncProviderFolder}/${path.parse(filename).name}`))
-            )
           )
+        })
       )
       : notnull(this.inlineMigrations, {})
   }
