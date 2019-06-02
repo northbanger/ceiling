@@ -1,6 +1,6 @@
 {
   "name": "ceiling",
-  "version": "1.4.17",
+  "version": "1.4.18",
   "description": "An extensible Node.js library and command-line tool to sync databases and files between endpoints",
   "main": "src/ceiling.js",
   "author": "Sebastian Landwehr",
