@@ -1,6 +1,6 @@
 {
   "name": "ceiling",
-  "version": "1.4.18",
+  "version": "1.5.18",
   "description": "An extensible Node.js library and command-line tool to sync databases and files between endpoints",
   "main": "src/ceiling.js",
   "author": "Sebastian Landwehr",
@@ -13,6 +13,9 @@
     "deploy": "deploy-node-module"
   },
   "dependencies": {
+    "@babel/core": "^7.4.5",
+    "@babel/preset-env": "^7.4.5",
+    "@babel/register": "^7.4.4",
     "commander": "^2.12.2",
     "find-up": "^3.0.0",
     "lodash": "^4.17.10",

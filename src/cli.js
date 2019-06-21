@@ -1,10 +1,17 @@
 const Ceiling = require('./ceiling')
 const _ = require('lodash')
+const babelRegister = require('@babel/register')
+const path = require('path')
+
+babelRegister({
+  configFile: path.resolve(__dirname, 'babel.config.js'),
+  ignore: [/node_modules/],
+})
 
 class Cli {
 
   constructor(options) {
-    this.ceiling = new Ceiling(require(options.config))
+    this.ceiling = new Ceiling(require(options.config).default)
   }
 
   push(endpointName) {
