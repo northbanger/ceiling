@@ -1,6 +1,6 @@
 {
   "name": "ceiling",
-  "version": "1.5.19",
+  "version": "1.5.20",
   "description": "An extensible Node.js library and command-line tool to sync databases and files between endpoints",
   "main": "src/index.js",
   "author": "Sebastian Landwehr",
@@ -14,16 +14,12 @@
     "test": "nyc --reporter lcov --reporter text mocha"
   },
   "dependencies": {
-    "@babel/core": "^7.4.5",
-    "@babel/preset-env": "^7.4.5",
-    "@babel/register": "^7.4.4",
-    "commander": "^2.12.2",
     "find-up": "^3.0.0",
     "lodash": "^4.17.10",
+    "make-cli": "^1.0.2",
     "mysqldump-search-replace": "^1.0.5",
     "promise-sequential": "^1.1.1",
-    "prompt-confirm": "^1.2.0",
-    "twig": "^1.10.5"
+    "prompt-confirm": "^1.2.0"
   },
   "devDependencies": {
     "@dword-design/config-files": "^1.0.3",

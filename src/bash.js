@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const program = require('commander')
+const makeCli = require('make-cli')
 const Cli = require('./cli')
 const path = require('path')
 const findUp = require('find-up')
@@ -33,31 +33,48 @@ function confirm(fromEndpointName, toEndpointName, options) {
   }
 }
 
-program.command('push <endpoint>')
-  .description('Push data to an endpoint or to all endpoints')
-  .option('-y, --yes', 'do not ask for confirmation')
-  .action((endpointName, options) => confirm('local', endpointName, options).then(yes => {
-    if (yes) {
-      cli.push(endpointName)
-    }
-  }))
-
-program.command('pull <endpoint>')
-  .description('Pull data from an endpoint or from all endpoints')
-  .option('-y, --yes', 'do not ask for confirmation')
-  .action((endpointName, options) => confirm(endpointName, 'local', options).then(yes => {
-    if (yes) {
-      cli.pull(endpointName)
-    }
-  }))
-
-program.command('migrate <endpoint>')
-  .description('Migrate data at an endpoint')
-  .option('-y, --yes', 'do not ask for confirmation')
-  .action(endpointName => cli.migrate(endpointName))
-
-if (!process.argv.slice(2).length || !program.commands.find((command) => command.name() == process.argv[2])) {
-  program.outputHelp();
-}
-
-program.parse(process.argv)
+makeCli({
+  commands: [
+    {
+      name: 'push <endpoint>',
+      description: 'Push data to an endpoint or to all endpoints',
+      options: [
+        {
+          name: '-y, --yes',
+          description: 'do not ask for confirmation',
+        }
+      ],
+      action: (endpointName, options) => confirm('local', endpointName, options).then(yes => {
+        if (yes) {
+          cli.push(endpointName)
+        }
+      }),
+    },
+    {
+      name: 'pull <endpoint>',
+      description: 'Pull data from an endpoint or from all endpoints',
+      options: [
+        {
+          name: '-y, --yes',
+          description: 'do not ask for confirmation',
+        }
+      ],
+      action: (endpointName, options) => confirm(endpointName, 'local', options).then(yes => {
+        if (yes) {
+          cli.pull(endpointName)
+        }
+      }),
+    },
+    {
+      name: 'migrate <endpoint>',
+      description: 'Migrate data at an endpoint',
+      options: [
+        {
+          name: '-y, --yes',
+          description: 'do not ask for confirmation',
+        },
+      ],
+      action: endpointName => cli.migrate(endpointName),
+    },
+  ],
+})
