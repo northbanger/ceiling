@@ -1,8 +1,9 @@
-const Ceiling = require('./ceiling')
+const Ceiling = require('ceiling')
 const stdout = require("test-console").stdout
 const _ = require('lodash')
 const mockfs = require('mock-fs')
 const fs = require('fs')
+const expect = require('expect')
 
 describe('Ceiling', () => {
 

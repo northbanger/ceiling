@@ -1,4 +1,4 @@
-const Ceiling = require('./ceiling')
+const Ceiling = require('.')
 const _ = require('lodash')
 const babelRegister = require('@babel/register')
 const path = require('path')

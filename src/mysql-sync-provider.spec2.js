@@ -1,4 +1,4 @@
-const MysqlSyncProvider = require('./mysql-sync-provider');
+const MysqlSyncProvider = require('../src/mysql-sync-provider');
 const cliConfig = require('./config');
 const consoleMock = require('console-mock2');
 

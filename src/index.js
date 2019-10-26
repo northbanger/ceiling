@@ -1,5 +1,4 @@
 const _ = require('lodash')
-const notnull = require('not-null')
 const sequential = require('promise-sequential')
 const fs = require('fs')
 const path = require('path')
@@ -20,7 +19,7 @@ class Ceiling {
   }
 
   getEndpoint(endpointName, syncProviderName) {
-    return notnull(this.endpoints[endpointName], {})[syncProviderName]
+    return (this.endpoints[endpointName] || {})[syncProviderName]
   }
 
   validate(endpoint) {
@@ -39,7 +38,7 @@ class Ceiling {
             if (syncProvider.sync != null) {
               const fromEndpoint = this.getEndpoint(operation == Ceiling.PUSH ? 'local' : endpointName, syncProviderName)
               const toEndpoint = this.getEndpoint(operation == Ceiling.PUSH ? endpointName : 'local', syncProviderName)
-              const endpointToString = notnull(syncProvider.endpointToString, JSON.stringify)
+              const endpointToString = syncProvider.endpointToString || JSON.stringify
 
               console.log(`${endpointToString.call(syncProvider, fromEndpoint)} => ${endpointToString.call(syncProvider, toEndpoint)} ...`)
               return syncProvider.sync(fromEndpoint, toEndpoint)
@@ -66,7 +65,7 @@ class Ceiling {
 
   get migrations() {
     const folders = fs.readdirSync(this.migrationsFolder).filter(folder => !folder.startsWith('.'))
-    return (this.migrationsFolder != null && _.isEmpty(notnull(this.inlineMigrations, {})))
+    return (this.migrationsFolder != null && _.isEmpty(this.inlineMigrations))
       ? _.zipObject(
         folders,
         folders.map(syncProviderFolder => {
@@ -78,7 +77,7 @@ class Ceiling {
           )
         })
       )
-      : notnull(this.inlineMigrations, {})
+      : (this.inlineMigrations || {})
   }
 
   migrate(endpointName = 'local') {
@@ -88,14 +87,14 @@ class Ceiling {
           try {
             const syncProvider = this.syncProviders[syncProviderName]
             const endpoint = this.getEndpoint(endpointName, syncProviderName)
-            const endpointToString = notnull(syncProvider.endpointToString, JSON.stringify)
+            const endpointToString = syncProvider.endpointToString || JSON.stringify
             return Promise.resolve()
               .then(() => console.log(`Migrating ${endpointToString.call(syncProvider, endpoint)} ...`))
               .then(() => syncProvider.getExecutedMigrations != null
                 ? syncProvider.getExecutedMigrations(endpoint)
                 : Promise.resolve([])
               )
-              .then(executedMigrations => _.omit(notnull(migrations, {}), executedMigrations))
+              .then(executedMigrations => _.omit(migrations || {}, executedMigrations))
               .then(migrationsToExecute => sequential(
                 _(migrationsToExecute)
                   .mapValues((migration, name) => () => {
