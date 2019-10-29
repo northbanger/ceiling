@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-const makeCli = require('make-cli')
-const Cli = require('./cli')
-const path = require('path')
-const findUp = require('find-up')
-const Confirm = require('prompt-confirm')
+import makeCli from 'make-cli'
+import Cli from './cli'
+import P from 'path'
+import findUp from 'find-up'
+import Confirm from 'prompt-confirm'
 
 const cli = new Cli({
-  config: process.cwd() + '/' + path.relative(process.cwd(), findUp.sync('ceiling.config.js'))
+  config: process.cwd() + '/' + P.relative(process.cwd(), findUp.sync('ceiling.config.js')),
 })
 
 /*program.command('ssh <service> [endpoint]')
@@ -24,14 +24,9 @@ const cli = new Cli({
     }
   });*/
 
-function confirm(fromEndpointName, toEndpointName, options) {
-  if (options.yes) {
-    return Promise.resolve(true)
-  } else {
-    const confirmMessage = new Confirm(cli.confirmString(fromEndpointName, toEndpointName))
-    return confirmMessage.run()
-  }
-}
+const confirm = async (fromEndpointName, toEndpointName, options) => options.yes
+  ? true
+  : await (new Confirm(cli.confirmString(fromEndpointName, toEndpointName))).run()
 
 makeCli({
   commands: [
@@ -42,7 +37,7 @@ makeCli({
         {
           name: '-y, --yes',
           description: 'do not ask for confirmation',
-        }
+        },
       ],
       action: (endpointName, options) => confirm('local', endpointName, options).then(yes => {
         if (yes) {
@@ -57,7 +52,7 @@ makeCli({
         {
           name: '-y, --yes',
           description: 'do not ask for confirmation',
-        }
+        },
       ],
       action: (endpointName, options) => confirm(endpointName, 'local', options).then(yes => {
         if (yes) {

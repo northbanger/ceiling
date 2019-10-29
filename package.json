@@ -1,34 +1,26 @@
 {
   "name": "ceiling",
-  "version": "1.5.20",
+  "version": "1.5.21",
   "description": "An extensible Node.js library and command-line tool to sync databases and files between endpoints",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "author": "Sebastian Landwehr",
   "license": "MIT",
   "bin": {
-    "ceiling": "./src/bash.js"
+    "ceiling": "./dist/bash.js"
   },
   "scripts": {
-    "prepare": "dw-config-files",
-    "pretest": "install-self",
-    "test": "nyc --reporter lcov --reporter text mocha"
+    "prepare": "base",
+    "test": "base test"
   },
   "dependencies": {
+    "child-process-promise": "^2.2.1",
     "find-up": "^3.0.0",
-    "lodash": "^4.17.10",
     "make-cli": "^1.0.2",
-    "mysqldump-search-replace": "^1.0.5",
     "promise-sequential": "^1.1.1",
     "prompt-confirm": "^1.2.0"
   },
   "devDependencies": {
-    "@dword-design/config-files": "^1.0.3",
-    "console-mock2": "^0.2.1",
-    "expect": "^24.9.0",
-    "install-self": "dword-design/install-self#fork",
-    "mocha": "^6.2.2",
-    "mock-fs": "^4.6.0",
-    "nyc": "^14.1.1",
+    "@dword-design/base-node": "^0.1.15",
     "test-console": "^1.1.0",
     "tmp": "0.0.33"
   }

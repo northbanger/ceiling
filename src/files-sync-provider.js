@@ -1,25 +1,24 @@
-function getUploadsUrl(config) {
-  return endpointName == 'local'
-    ? config.path
-    : `${config.user}@${config.host}${path ? ':' + path : ''}`;
-}
+import { spawn } from 'child-process-promise'
+import VariableNotDefinedError from './variable-not-defined-error'
 
-module.exports = {
+const getUploadsUrl = config => config.endpointName == 'local'
+  ? config.path
+  : `${config.user}@${config.host}${config.path ? ':' + config.path : ''}`
 
-  validate(config, syncProviderName, endpointName) {
-    if (config.path == null) {
-      throw new VariableMissingError('path', syncProviderName, endpointName)
+export default {
+
+  validate: (config, syncProviderName, endpointName) => {
+    if (config.path === undefined) {
+      throw new VariableNotDefinedError('path', syncProviderName, endpointName)
     }
   },
 
-  sync(fromConfig, toConfig) {
-    var fromUploadsUrl = getUploadsUrl(fromConfig)
-    var toUploadsUrl = getUploadsUrl(toConfig)
-    console.log(`Syncing uploads ${fromUploadsUrl} > ${toUploadsUrl} ...`);
-    this.exec(`rsync -a --delete ${fromUploadsUrl}/ ${toUploadsUrl}`);
+  sync: async (fromConfig, toConfig) => {
+    const fromUploadsUrl = getUploadsUrl(fromConfig)
+    const toUploadsUrl = getUploadsUrl(toConfig)
+    console.log(`Syncing uploads ${fromUploadsUrl} > ${toUploadsUrl} ...`)
+    await spawn('rsync', ['-a', '--delete', `${fromUploadsUrl}/`, toUploadsUrl], { stdio: 'inherit' })
   },
 
-  previewString(fromConfig, toConfig) {
-    return `Replace data from '${getUploadsUrl(toConfig)}' with data from '${getUploadsUrl(fromConfig)}'`;
-  }
+  previewString: (fromConfig, toConfig) => `Replace data from '${getUploadsUrl(toConfig)}' with data from '${getUploadsUrl(fromConfig)}'`,
 }
