@@ -13,15 +13,14 @@
     "test": "base test"
   },
   "dependencies": {
-    "child-process-promise": "^2.2.1",
-    "find-up": "^3.0.0",
-    "make-cli": "^1.0.2",
+    "find-up": "^4.1.0",
+    "make-cli": "^1.0.4",
     "promise-sequential": "^1.1.1",
-    "prompt-confirm": "^1.2.0"
+    "prompt-confirm": "^2.0.4"
   },
   "devDependencies": {
-    "@dword-design/base-node": "^0.1.15",
+    "@dword-design/base-node": "^0.2.0",
     "test-console": "^1.1.0",
-    "tmp": "0.0.33"
+    "tmp": "^0.1.0"
   }
 }

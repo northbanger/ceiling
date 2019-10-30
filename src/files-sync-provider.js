@@ -1,4 +1,4 @@
-import { spawn } from 'child-process-promise'
+import { spawn } from 'child_process'
 import VariableNotDefinedError from './variable-not-defined-error'
 
 const getUploadsUrl = config => config.endpointName == 'local'

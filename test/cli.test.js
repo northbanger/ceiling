@@ -1,7 +1,7 @@
 import { writeFileSync } from 'fs'
 import tmp from 'tmp'
 import { endent } from '@functions'
-import { spawn } from 'child-process-promise'
+import { spawn } from 'child_process'
 
 describe('cli', () => {
 
