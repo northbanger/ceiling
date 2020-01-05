@@ -1,6 +1,6 @@
 {
   "name": "ceiling",
-  "version": "1.5.23",
+  "version": "2.0.0",
   "description": "An extensible Node.js library and command-line tool to sync databases and files between endpoints",
   "repository": "dword-design/ceiling",
   "license": "MIT",
