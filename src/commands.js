@@ -1,9 +1,10 @@
 import config from './config'
-import { map, pullAll, mapValues, values, join, keys, pickBy, isEmpty, promiseAll, reduce, endent, zipObject, unary } from '@dword-design/functions'
+import { map, pullAll, mapValues, values, join, keys, pickBy, isEmpty, promiseAll, endent, zipObject, unary } from '@dword-design/functions'
 import glob from 'glob-promise'
 import P from 'path'
 import Confirm from 'prompt-confirm'
 import getPluginName from './get-plugin-name'
+import sequential from 'promise-sequential'
 
 const sync = async (operation, endpointName = 'live', { yes }) => {
   const fromEndpoint = config.endpoints[operation === 'push' ? 'local' : endpointName]
@@ -127,23 +128,25 @@ export default {
       }
 
       migrations
-        |> mapValues(async (migrations, pluginName) => {
+        |> mapValues((pluginMigrations, pluginName) => async () => {
           const pluginConfig = config.endpoints[endpointName]?.[pluginName]
           const { endpointToString, setExecutedMigrations, getMigrationParams } = config.plugins[pluginName]
 
           console.log(`Migrating ${pluginConfig |> endpointToString} …`)
-          migrations
-            |> mapValues(({ up }, name) => {
-              console.log(` - ${name}`)
-              return up(pluginConfig |> getMigrationParams)
-            })
+          pluginMigrations
+            |> mapValues(
+              ({ up }, name) => () => {
+                console.log(` - ${name}`)
+                return up(pluginConfig |> getMigrationParams)
+              },
+            )
             |> values
-            |> reduce((acc, promise) => acc.then(() => promise), Promise.resolve())
+            |> sequential
             |> await
-          return setExecutedMigrations(pluginConfig, migrations |> keys)
+          return setExecutedMigrations(pluginConfig, pluginMigrations |> keys)
         })
         |> values
-        |> promiseAll
+        |> sequential
         |> await
     },
   },

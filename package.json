@@ -23,6 +23,7 @@
     "glob-promise": "^3.4.0",
     "make-cli": "^1.0.4",
     "matchdep": "^2.0.0",
+    "promise-sequential": "^1.1.1",
     "prompt-confirm": "^2.0.4",
     "resolve-from": "^5.0.0"
   },
