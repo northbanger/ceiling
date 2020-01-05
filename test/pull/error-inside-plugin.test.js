@@ -12,7 +12,9 @@ export default () => withLocalTmpDir(__dirname, async () => {
       }
     `,
     'node_modules/ceiling-plugin-mysql/index.js': endent`
-      module.exports = {}
+      module.exports = {
+        sync: () => { throw new Error('foo') }
+      }
     `,
     'package.json': endent`
       {
@@ -22,6 +24,15 @@ export default () => withLocalTmpDir(__dirname, async () => {
       }
     `,
   })
-  const { stdout } = await spawn('ceiling', ['push', '-y'], { capture: ['stdout'] })
-  expect(stdout).toEqual('undefined => undefined …\n')
+  let stdout
+  try {
+    await spawn('ceiling', ['pull', '-y'], { capture: ['stdout'] })
+  } catch (error) {
+    stdout = error.stdout
+  }
+  expect(stdout).toEqual(endent`
+    undefined => undefined …
+    foo
+
+  `)
 })

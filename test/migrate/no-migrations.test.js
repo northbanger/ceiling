@@ -22,6 +22,6 @@ export default () => withLocalTmpDir(__dirname, async () => {
       }
     `,
   })
-  const { stdout } = await spawn('ceiling', ['push', '-y'], { capture: ['stdout'] })
-  expect(stdout).toEqual('undefined => undefined …\n')
+  const { stdout } = await spawn('ceiling', ['migrate', '-y'], { capture: ['stdout'] })
+  expect(stdout).toEqual('')
 })

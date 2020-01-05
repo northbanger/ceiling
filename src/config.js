@@ -1,5 +1,5 @@
 import { cosmiconfigSync } from 'cosmiconfig'
-import { map, unary, noop, stubArray, stubObject, zipObject, mapValues, mapKeys } from '@dword-design/functions'
+import { map, unary, noop, stubArray, identity, zipObject, mapValues, mapKeys } from '@dword-design/functions'
 import getPluginName from './get-plugin-name'
 import resolveFrom from 'resolve-from'
 
@@ -16,7 +16,7 @@ export default {
         endpointToString: JSON.stringify,
         getExecutedMigrations: stubArray,
         setExecutedMigrations: noop,
-        getMigrationParams: stubObject,
+        getMigrationParams: identity,
         sync: noop,
         ...require(resolveFrom(process.cwd(), name)),
       })),

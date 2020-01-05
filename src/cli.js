@@ -9,6 +9,14 @@ makeCli({
     |> mapValues((command, name) => ({
       ...command |> omit('arguments'),
       name: `${name}${command.arguments !== undefined ? ` ${command.arguments}` : ''}`,
+      handler: async (...args) => {
+        try {
+          return command.handler(...args) |> await
+        } catch (error) {
+          console.log(error.message)
+          process.exit(1)
+        }
+      },
     }))
     |> values,
 })

@@ -58,14 +58,14 @@ export default () => withLocalTmpDir(__dirname, async () => {
       }
     `,
   })
-  const { stdout } = await spawn('ceiling', ['push', '-y'], { capture: ['stdout'] })
+  const { stdout } = await spawn('ceiling', ['pull', '-y'], { capture: ['stdout'] })
   expect(stdout).toEqual(endent`
-    mysql://mysql-local.de => mysql://mysql-live.de …
-    { host: 'mysql-local.de' }
+    mysql://mysql-live.de => mysql://mysql-local.de …
     { host: 'mysql-live.de' }
-    mongodb://mongodb-local.de => mongodb://mongodb-live.de …
-    { host: 'mongodb-local.de' }
+    { host: 'mysql-local.de' }
+    mongodb://mongodb-live.de => mongodb://mongodb-local.de …
     { host: 'mongodb-live.de' }
+    { host: 'mongodb-local.de' }
 
   `)
 })

@@ -12,8 +12,22 @@ export default () => withLocalTmpDir(__dirname, async () => {
       }
     `,
     'node_modules/ceiling-plugin-mysql/index.js': endent`
-      module.exports = {}
+      module.exports = {
+        getExecutedMigrations: () => ['1-test'],
+      }
     `,
+    'migrations/mysql': {
+      '1-test.js': endent`
+        module.exports = {
+          up: () => console.log('up 1'),
+        }
+      `,
+      '2-test2.js': endent`
+        module.exports = {
+          up: () => console.log('up 2'),
+        }
+      `,
+    },
     'package.json': endent`
       {
         "devDependencies": {
@@ -22,6 +36,11 @@ export default () => withLocalTmpDir(__dirname, async () => {
       }
     `,
   })
-  const { stdout } = await spawn('ceiling', ['push', '-y'], { capture: ['stdout'] })
-  expect(stdout).toEqual('undefined => undefined …\n')
+  const { stdout } = await spawn('ceiling', ['migrate', '-y'], { capture: ['stdout'] })
+  expect(stdout).toEqual(endent`
+    Migrating undefined …
+     - 2-test2
+    up 2
+
+  `)
 })

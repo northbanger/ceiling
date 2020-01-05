@@ -4,7 +4,7 @@ import expect from 'expect'
 import outputFiles from 'output-files'
 import { endent } from '@dword-design/functions'
 
-export default () => withLocalTmpDir(async () => {
+export default () => withLocalTmpDir(__dirname, async () => {
   await outputFiles({
     'ceiling.config.js': endent`
       module.exports = {

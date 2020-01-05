@@ -9,11 +9,27 @@ export default () => withLocalTmpDir(__dirname, async () => {
     'ceiling.config.js': endent`
       module.exports = {
         plugins: ['mysql'],
+        endpoints: {
+          local: {
+            mysql: {
+              host: 'local.de',
+            },
+          },
+          live: {
+            mysql: {
+              host: 'live.de',
+            },
+          },
+        },
       }
     `,
     'node_modules/ceiling-plugin-mysql/index.js': endent`
       module.exports = {
-        sync: () => {},
+        endpointToString: ({ host }) => \`mysql://\${host}\`,
+        sync: (from, to) => {
+          console.log(from)
+          console.log(to)
+        },
       }
     `,
     'package.json': endent`
@@ -24,6 +40,11 @@ export default () => withLocalTmpDir(__dirname, async () => {
       }
     `,
   })
-  const { stdout } = await spawn('ceiling', ['push', '-y'], { capture: ['stdout'] })
-  expect(stdout).toEqual('undefined => undefined …\n')
+  const { stdout } = await spawn('ceiling', ['pull', '-y'], { capture: ['stdout'] })
+  expect(stdout).toEqual(endent`
+    mysql://live.de => mysql://local.de …
+    { host: 'live.de' }
+    { host: 'local.de' }
+
+  `)
 })
