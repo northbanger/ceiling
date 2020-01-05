@@ -20,11 +20,10 @@
   "dependencies": {
     "@dword-design/functions": "^2.6.3",
     "cosmiconfig": "^6.0.0",
-    "get-package-name": "^1.1.0",
     "glob-promise": "^3.4.0",
     "make-cli": "^1.0.4",
+    "matchdep": "^2.0.0",
     "prompt-confirm": "^2.0.4",
-    "resolve-dep": "^0.6.0",
     "resolve-from": "^5.0.0"
   },
   "devDependencies": {

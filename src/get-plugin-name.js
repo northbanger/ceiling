@@ -1,12 +1,13 @@
-import resolveDep from 'resolve-dep'
+import matchdep from 'matchdep'
 import { first } from '@dword-design/functions'
-import getPackageName from 'get-package-name'
+import P from 'path'
 
-export default shortName => [
-  `@dword-design/ceiling-plugin-${shortName}`,
-  `ceiling-plugin-${shortName}`,
-  shortName,
-]
-  |> resolveDep
+export default shortName => matchdep.filterAll(
+  [
+    `@dword-design/ceiling-plugin-${shortName}`,
+    `ceiling-plugin-${shortName}`,
+    shortName,
+  ],
+  P.resolve('package.json')
+)
   |> first
-  |> getPackageName
