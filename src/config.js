@@ -15,7 +15,7 @@ export default {
       |> map(name => ({
         endpointToString: JSON.stringify,
         getExecutedMigrations: stubArray,
-        setExecutedMigrations: noop,
+        addExecutedMigrations: noop,
         getMigrationParams: identity,
         sync: noop,
         ...require(resolveFrom(process.cwd(), name)),

@@ -130,7 +130,7 @@ export default {
       migrations
         |> mapValues((pluginMigrations, pluginName) => async () => {
           const pluginConfig = config.endpoints[endpointName]?.[pluginName]
-          const { endpointToString, setExecutedMigrations, getMigrationParams } = config.plugins[pluginName]
+          const { endpointToString, addExecutedMigrations, getMigrationParams } = config.plugins[pluginName]
 
           console.log(`Migrating ${pluginConfig |> endpointToString} …`)
           pluginMigrations
@@ -143,7 +143,7 @@ export default {
             |> values
             |> sequential
             |> await
-          return setExecutedMigrations(pluginConfig, pluginMigrations |> keys)
+          return addExecutedMigrations(pluginConfig, pluginMigrations |> keys)
         })
         |> values
         |> sequential

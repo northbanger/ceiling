@@ -13,7 +13,7 @@ export default () => withLocalTmpDir(__dirname, async () => {
     `,
     'node_modules/ceiling-plugin-mysql/index.js': endent`
       module.exports = {
-        setExecutedMigrations: (endpoint, migrations) => console.log(\`Executed migrations set to \${migrations.join(',')}\`),
+        addExecutedMigrations: (endpoint, migrations) => console.log(\`Added executed migrations \${migrations.join(',')}\`),
       }
     `,
     'migrations/mysql': {
@@ -36,7 +36,7 @@ export default () => withLocalTmpDir(__dirname, async () => {
     Migrating undefined …
      - 1-test
     up 1
-    Executed migrations set to 1-test
+    Added executed migrations 1-test
 
   `)
 })
