@@ -2,25 +2,36 @@
   "name": "ceiling",
   "version": "1.5.23",
   "description": "An extensible Node.js library and command-line tool to sync databases and files between endpoints",
-  "main": "dist/index.js",
-  "author": "Sebastian Landwehr",
+  "repository": "dword-design/ceiling",
   "license": "MIT",
+  "author": "Sebastian Landwehr <info@dword-design.de>",
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.js",
   "bin": {
-    "ceiling": "./dist/bash.js"
+    "ceiling": "./dist/cli.js"
   },
   "scripts": {
-    "prepare": "base-node prepare",
-    "test": "base-node test"
+    "prepublishOnly": "base build",
+    "start": "base start",
+    "test": "base test"
   },
   "dependencies": {
-    "find-up": "^4.1.0",
+    "@dword-design/functions": "^2.6.3",
+    "cosmiconfig": "^6.0.0",
+    "get-package-name": "^1.1.0",
+    "glob-promise": "^3.4.0",
     "make-cli": "^1.0.4",
-    "promise-sequential": "^1.1.1",
-    "prompt-confirm": "^2.0.4"
+    "prompt-confirm": "^2.0.4",
+    "resolve-dep": "^0.6.0",
+    "resolve-from": "^5.0.0"
   },
   "devDependencies": {
-    "@dword-design/base-node": "^1.0.0",
-    "test-console": "^1.1.0",
-    "tmp": "^0.1.0"
+    "@dword-design/base": "^4.0.1",
+    "child-process-promise": "^2.2.1",
+    "expect": "^24.9.0",
+    "output-files": "^1.1.12",
+    "with-local-tmp-dir": "^2.2.5"
   }
 }
