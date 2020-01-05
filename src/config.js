@@ -2,6 +2,10 @@ import { cosmiconfigSync } from 'cosmiconfig'
 import { map, unary, noop, stubArray, identity, zipObject, mapValues, mapKeys } from '@dword-design/functions'
 import getPluginName from './get-plugin-name'
 import resolveFrom from 'resolve-from'
+import babelRegister from '@babel/register'
+import babelConfig from '@dword-design/babel-config'
+
+babelRegister(babelConfig)
 
 const explorer = cosmiconfigSync('ceiling')
 const searchResult = explorer.search()
