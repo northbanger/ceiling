@@ -30,7 +30,7 @@
     "resolve-from": "^5.0.0"
   },
   "devDependencies": {
-    "@dword-design/base": "^4.0.1",
+    "@dword-design/base": "^5.0.0",
     "child-process-promise": "^2.2.1",
     "expect": "^24.9.0",
     "output-files": "^1.1.12",
