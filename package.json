@@ -19,8 +19,6 @@
     "test": "base test"
   },
   "dependencies": {
-    "@babel/register": "^7.7.7",
-    "@dword-design/babel-config": "^1.0.12",
     "@dword-design/functions": "^2.6.3",
     "cosmiconfig": "^6.0.0",
     "glob-promise": "^3.4.0",
