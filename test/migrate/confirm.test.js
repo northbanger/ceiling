@@ -3,6 +3,7 @@ import withLocalTmpDir from 'with-local-tmp-dir'
 import expect from 'expect'
 import outputFiles from 'output-files'
 import { endent } from '@dword-design/functions'
+import stripAnsi from 'strip-ansi'
 
 export default () => withLocalTmpDir(__dirname, async () => {
   await outputFiles({
@@ -61,13 +62,13 @@ export default () => withLocalTmpDir(__dirname, async () => {
     childProcess.stdin.write('Y\n')
     resolve()
   }))
-  expect(stdout).toEqual(endent`
-    \u001b[36m?\u001b[39m \u001b[1mAre you sure you want to …
+  expect(stdout |> stripAnsi).toEqual(endent`
+    ? Are you sure you want to …
     mongodb://mongodb-local.de
      - 1-test
     mysql://mysql-local.de
      - 1-test
-    \u001b[22m \u001b[2m(Y/n) \u001b[22m
+     (Y/n)${' '}
   `)
   childProcess.stdout.removeAllListeners('data')
   await new Promise(resolve => childProcess.stdout.on('data', data => {
