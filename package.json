@@ -5,16 +5,17 @@
   "repository": "dword-design/ceiling",
   "license": "MIT",
   "author": "Sebastian Landwehr <info@dword-design.de>",
-  "files": [
-    "dist"
-  ],
   "main": "dist/index.js",
   "bin": {
     "ceiling": "./dist/cli.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "prepublishOnly": "base build",
-    "start": "base start",
+    "depgraph": "base depgraph",
+    "prepare": "base prepare",
+    "prepublishOnly": "base prepublishOnly",
     "test": "base test"
   },
   "dependencies": {

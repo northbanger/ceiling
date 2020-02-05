@@ -8,6 +8,6 @@ export default shortName => matchdep.filterAll(
     `ceiling-plugin-${shortName}`,
     shortName,
   ],
-  P.resolve('package.json')
+  P.resolve('package.json'),
 )
   |> first

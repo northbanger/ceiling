@@ -16,7 +16,7 @@ const sync = async (operation, endpointName = 'live', { yes }) => {
           const fromPluginConfig = fromEndpoint?.[pluginName]
           const toPluginConfig = toEndpoint?.[pluginName]
           return ` - ${fromPluginConfig |> endpointToString} => ${toPluginConfig |> endpointToString}\n`
-        }
+        },
       )
       |> values
       |> join('')
@@ -93,11 +93,11 @@ export default {
             return zipObject(
               migrationNames,
               migrationNames
-                |> map(filename => require(P.resolve('migrations', shortPluginName, filename)))
+                |> map(filename => require(P.resolve('migrations', shortPluginName, filename))),
             )
           })
           |> promiseAll
-          |> await
+          |> await,
       )
         |> pickBy(migrations => !(migrations |> isEmpty))
 
@@ -110,7 +110,7 @@ export default {
                 ${endpoint?.[pluginName] |> endpointToString}
                  ${migrations |> keys |> map(name => `- ${name}`) |> join('\n')}
               `
-            }
+            },
           )
           |> values
           |> map(string => `${string}\n`)
