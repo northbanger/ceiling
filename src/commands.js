@@ -1,15 +1,15 @@
 import config from './config'
-import { map, pullAll, mapValues, values, join, keys, pickBy, isEmpty, promiseAll, endent, zipObject, unary } from '@dword-design/functions'
+import { map, pullAll, mapValues, values, join, keys, pickBy, isEmpty, promiseAll, endent, zipObject, unary, property } from '@dword-design/functions'
 import glob from 'glob-promise'
 import P from 'path'
-import Confirm from 'prompt-confirm'
+import inquirer from 'inquirer'
 import getPluginName from './get-plugin-name'
 import sequential from 'promise-sequential'
 
 const sync = async (operation, endpointName = 'live', { yes }) => {
   const fromEndpoint = config.endpoints[operation === 'push' ? 'local' : endpointName]
   const toEndpoint = config.endpoints[operation === 'push' ? endpointName : 'local']
-  if (!yes && !(await (() => {
+  if (!yes && !(await (async () => {
     const hints = config.plugins
       |> mapValues(
         ({ endpointToString }, pluginName) => {
@@ -20,11 +20,17 @@ const sync = async (operation, endpointName = 'live', { yes }) => {
       )
       |> values
       |> join('')
-    const confirm = new Confirm(endent`
-      Are you sure you want to …
-      ${hints}
-    `)
-    return confirm.run()
+    return inquirer.prompt({
+      name: 'confirm',
+      type: 'confirm',
+      message: endent`
+        Are you sure you want to …
+        ${hints}
+      `,
+      default: false,
+    })
+      |> await
+      |> property('confirm')
   })())) {
     return
   }
@@ -101,7 +107,7 @@ export default {
       )
         |> pickBy(migrations => !(migrations |> isEmpty))
 
-      if (!yes && !(await (() => {
+      if (!yes && !(await (async () => {
         const hints = migrations
           |> mapValues(
             (migrations, pluginName) => {
@@ -115,11 +121,17 @@ export default {
           |> values
           |> map(string => `${string}\n`)
           |> join('')
-        const confirm = new Confirm(endent`
-          Are you sure you want to …
-          ${hints}
-        `)
-        return confirm.run()
+        return inquirer.prompt({
+          name: 'confirm',
+          type: 'confirm',
+          message: endent`
+            Are you sure you want to …
+            ${hints}
+          `,
+          default: false,
+        })
+          |> await
+          |> property('confirm')
       })())) {
         return
       }

@@ -22,10 +22,10 @@
     "@dword-design/functions": "^2.6.3",
     "cosmiconfig": "^6.0.0",
     "glob-promise": "^3.4.0",
+    "inquirer": "^7.0.4",
     "make-cli": "^1.0.4",
     "matchdep": "^2.0.0",
     "promise-sequential": "^1.1.1",
-    "prompt-confirm": "^2.0.4",
     "resolve-from": "^5.0.0"
   },
   "devDependencies": {

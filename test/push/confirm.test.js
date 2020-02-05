@@ -57,14 +57,14 @@ export default () => withLocalTmpDir(__dirname, async () => {
   let stdout
   await new Promise(resolve => childProcess.stdout.on('data', data => {
     stdout = data.toString()
-    childProcess.stdin.write('Y\n')
+    childProcess.stdin.write('y\n')
     resolve()
   }))
   expect(stdout |> stripAnsi).toEqual(endent`
     ? Are you sure you want to …
      - mongodb://mongodb-local.de => mongodb://mongodb-live.de
      - mysql://mysql-local.de => mysql://mysql-live.de
-     (Y/n)${' '}
+     (y/N)${' '}
   `)
   childProcess.stdout.removeAllListeners('data')
   await new Promise(resolve => childProcess.stdout.on('data', data => {
