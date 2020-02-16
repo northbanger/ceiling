@@ -29,7 +29,7 @@
     "resolve-from": "^5.0.0"
   },
   "devDependencies": {
-    "@dword-design/base": "^5.0.0",
+    "@dword-design/base": "^6.0.0",
     "child-process-promise": "^2.2.1",
     "output-files": "^1.1.12",
     "strip-ansi": "^6.0.0",
