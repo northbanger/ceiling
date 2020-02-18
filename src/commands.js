@@ -15,7 +15,7 @@ const sync = async (operation, endpointName = 'live', { yes }) => {
         ({ endpointToString }, pluginName) => {
           const fromPluginConfig = fromEndpoint?.[pluginName]
           const toPluginConfig = toEndpoint?.[pluginName]
-          return ` - ${fromPluginConfig |> endpointToString} => ${toPluginConfig |> endpointToString}\n`
+          return `  - ${fromPluginConfig |> endpointToString} => ${toPluginConfig |> endpointToString}\n`
         },
       )
       |> values
@@ -114,7 +114,7 @@ export default {
               const { endpointToString } = config.plugins[pluginName]
               return endent`
                 ${endpoint?.[pluginName] |> endpointToString}
-                 ${migrations |> keys |> map(name => `- ${name}`) |> join('\n')}
+                  ${migrations |> keys |> map(name => `- ${name}`) |> join('\n')}
               `
             },
           )
@@ -148,7 +148,7 @@ export default {
           pluginMigrations
             |> mapValues(
               ({ up }, name) => () => {
-                console.log(` - ${name}`)
+                console.log(`  - ${name}`)
                 return up(pluginConfig |> getMigrationParams)
               },
             )
