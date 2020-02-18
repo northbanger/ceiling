@@ -2,6 +2,7 @@ import execa from 'execa'
 import withLocalTmpDir from 'with-local-tmp-dir'
 import outputFiles from 'output-files'
 import { endent } from '@dword-design/functions'
+import pEvent from 'p-event'
 import stripAnsi from 'strip-ansi'
 
 export default {
@@ -55,31 +56,29 @@ export default {
         }
       `,
     })
-    const childProcess = execa.command('ceiling migrate')
-    let stdout
-    await new Promise(resolve => childProcess.stdout.on('data', data => {
-      stdout = data.toString()
-      childProcess.stdin.write('y\n')
-      resolve()
-    }))
-    expect(stdout |> stripAnsi).toEqual(endent`
+    const childProcess = execa.command('ceiling migrate', { all: true })
+    await pEvent(childProcess.all, 'data')
+    childProcess.stdin.write('y\n')
+    const { all } = await childProcess
+    expect(all |> stripAnsi).toEqual(endent`
       ? Are you sure you want to …
       mongodb://mongodb-local.de
-       - 1-test
+        - 1-test
       mysql://mysql-local.de
-       - 1-test
-       (y/N)${' '}
+        - 1-test
+       (y/N) y? Are you sure you want to …
+      mongodb://mongodb-local.de
+        - 1-test
+      mysql://mysql-local.de
+        - 1-test
+       Yes
+      Migrating mongodb://mongodb-local.de …
+        - 1-test
+      mongodb-local.de: mongodb up 1
+      Migrating mysql://mysql-local.de …
+        - 1-test
+      mysql-local.de: mysql up 1
     `)
-    childProcess.stdout.removeAllListeners('data')
-    await new Promise(resolve => childProcess.stdout.on('data', data => {
-      stdout += data.toString()
-      if (stdout.includes('mongodb-local.de: mongodb up 1\n')
-        && stdout.includes('mysql-local.de: mysql up 1\n')
-      ) {
-        resolve()
-      }
-    }))
-    childProcess.stdout.removeAllListeners('data')
   }),
   'executed migrations set': () => withLocalTmpDir(async () => {
     await outputFiles({
@@ -111,7 +110,7 @@ export default {
     const { all } = await execa.command('ceiling migrate -y', { all: true })
     expect(all).toEqual(endent`
       Migrating undefined …
-       - 1-test
+        - 1-test
       up 1
       Added executed migrations 1-test
     `)
@@ -151,7 +150,7 @@ export default {
     const { all } = await execa.command('ceiling migrate -y', { all: true })
     expect(all).toEqual(endent`
       Migrating undefined …
-       - 2-test2
+        - 2-test2
       up 2
     `)
   }),
@@ -233,10 +232,10 @@ export default {
     const { all } = await execa.command('ceiling migrate -y', { all: true })
     expect(all).toEqual(endent`
       Migrating mongodb://mongodb-local.de …
-       - 1-test
+        - 1-test
       mongodb-local.de: mongodb up 1
       Migrating mysql://mysql-local.de …
-       - 1-test
+        - 1-test
       mysql-local.de: mysql up 1
     `)
   }),
@@ -275,7 +274,7 @@ export default {
     const { all } = await execa.command('ceiling migrate -y', { all: true })
     expect(all).toEqual(endent`
       Migrating mysql://local.de …
-       - 1-test
+        - 1-test
       local.de: up 1
     `)
   }),

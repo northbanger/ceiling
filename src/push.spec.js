@@ -3,6 +3,7 @@ import withLocalTmpDir from 'with-local-tmp-dir'
 import outputFiles from 'output-files'
 import { endent } from '@dword-design/functions'
 import stripAnsi from 'strip-ansi'
+import pEvent from 'p-event'
 
 export default {
   confirm: () => withLocalTmpDir(async () => {
@@ -53,29 +54,23 @@ export default {
         }
       `,
     })
-    const childProcess = execa.command('ceiling push')
-    let stdout
-    await new Promise(resolve => childProcess.stdout.on('data', data => {
-      stdout = data.toString()
-      childProcess.stdin.write('y\n')
-      resolve()
-    }))
-    expect(stdout |> stripAnsi).toEqual(endent`
+    const childProcess = execa.command('ceiling push', { all: true })
+    await pEvent(childProcess.all, 'data')
+    childProcess.stdin.write('y\n')
+    const { all } = await childProcess
+    expect(all |> stripAnsi).toEqual(endent`
       ? Are you sure you want to …
-       - mongodb://mongodb-local.de => mongodb://mongodb-live.de
-       - mysql://mysql-local.de => mysql://mysql-live.de
-       (y/N)${' '}
+        - mongodb://mongodb-local.de => mongodb://mongodb-live.de
+        - mysql://mysql-local.de => mysql://mysql-live.de
+       (y/N) y? Are you sure you want to …
+        - mongodb://mongodb-local.de => mongodb://mongodb-live.de
+        - mysql://mysql-local.de => mysql://mysql-live.de
+       Yes
+      mongodb://mongodb-local.de => mongodb://mongodb-live.de …
+      synced mongodb
+      mysql://mysql-local.de => mysql://mysql-live.de …
+      synced mysql
     `)
-    childProcess.stdout.removeAllListeners('data')
-    await new Promise(resolve => childProcess.stdout.on('data', data => {
-      stdout += data.toString()
-      if (stdout.includes('synced mongodb\n')
-        && stdout.includes('synced mysql\n')
-      ) {
-        resolve()
-      }
-    }))
-    childProcess.stdout.removeAllListeners('data')
   }),
   'no endpointToString': () => withLocalTmpDir(async () => {
     await outputFiles({
