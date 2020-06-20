@@ -1,13 +1,13 @@
-import matchdep from 'matchdep'
-import { first } from '@dword-design/functions'
-import P from 'path'
+import parsePkgName from 'parse-pkg-name'
+import { startsWith } from '@dword-design/functions'
 
-export default shortName => matchdep.filterAll(
-  [
-    `@dword-design/ceiling-plugin-${shortName}`,
-    `ceiling-plugin-${shortName}`,
-    shortName,
-  ],
-  P.resolve('package.json'),
-)
-  |> first
+export default shortName => {
+  const parsedParts = parsePkgName(shortName)
+  if (parsedParts.name |> startsWith('ceiling-plugin-')) {
+    return shortName
+  }
+  if (parsedParts.org) {
+    return `@${parsedParts.org}/ceiling-plugin-${parsedParts.name}`
+  }
+  return `ceiling-plugin-${shortName}`
+}
