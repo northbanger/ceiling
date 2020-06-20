@@ -1,3 +1,10 @@
+## [2.2.5](https://github.com/dword-design/ceiling/compare/v2.2.4...v2.2.5) (2020-06-20)
+
+
+### Bug Fixes
+
+* use external package to get plugin name ([e89874a](https://github.com/dword-design/ceiling/commit/e89874aa1ce687182550295d274dc7290e26d71c))
+
 ## [2.2.4](https://github.com/dword-design/ceiling/compare/v2.2.3...v2.2.4) (2020-06-20)
 
 
