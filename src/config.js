@@ -1,12 +1,12 @@
 import { cosmiconfigSync } from 'cosmiconfig'
-import { map, unary, noop, stubArray, identity, zipObject, mapValues, mapKeys } from '@dword-design/functions'
-import getPluginName from './get-plugin-name'
+import { map, noop, stubArray, identity, zipObject, mapValues, mapKeys } from '@dword-design/functions'
+import { transform as pluginNameToPackageName } from 'plugin-name-to-package-name'
 import resolveFrom from 'resolve-from'
 
 const explorer = cosmiconfigSync('ceiling')
 const searchResult = explorer.search()
 const { plugins: shortPluginNames = [], endpoints = {} } = searchResult !== null ? searchResult.config : {}
-const pluginNames = shortPluginNames |> map(unary(getPluginName))
+const pluginNames = shortPluginNames |> map(shortName => pluginNameToPackageName(shortName, 'ceiling-plugin'))
 
 export default {
   plugins: zipObject(
@@ -22,5 +22,5 @@ export default {
       })),
   ),
   endpoints: endpoints
-    |> mapValues(mapKeys((pluginConfig, pluginName) => getPluginName(pluginName))),
+    |> mapValues(mapKeys((pluginConfig, pluginName) => pluginNameToPackageName(pluginName, 'ceiling-plugin'))),
 }

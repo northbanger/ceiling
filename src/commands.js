@@ -1,9 +1,9 @@
 import config from './config'
-import { map, pullAll, mapValues, values, join, keys, pickBy, isEmpty, promiseAll, endent, zipObject, unary, property } from '@dword-design/functions'
+import { map, pullAll, mapValues, values, join, keys, pickBy, isEmpty, promiseAll, endent, zipObject, property } from '@dword-design/functions'
 import glob from 'glob-promise'
 import P from 'path'
 import inquirer from 'inquirer'
-import getPluginName from './get-plugin-name'
+import { transform as pluginNameToPackageName } from 'plugin-name-to-package-name'
 import sequential from 'promise-sequential'
 
 const sync = async (operation, endpointName = 'live', { yes }) => {
@@ -85,10 +85,10 @@ export default {
       const endpoint = config.endpoints[endpointName]
       const shortPluginNames = glob('*', { cwd: 'migrations' }) |> await
       const migrations = zipObject(
-        shortPluginNames |> map(unary(getPluginName)),
+        shortPluginNames |> map(shortName => pluginNameToPackageName(shortName, 'ceiling-plugin')),
         shortPluginNames
           |> map(async shortPluginName => {
-            const pluginName = shortPluginName |> getPluginName
+            const pluginName = pluginNameToPackageName(shortPluginName, 'ceiling-plugin')
             const pluginConfig = endpoint?.[pluginName]
             const { getExecutedMigrations } = config.plugins[pluginName]
             const executedMigrations = pluginConfig |> getExecutedMigrations |> await
