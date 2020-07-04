@@ -1,14 +1,15 @@
-import execa from 'execa'
-import withLocalTmpDir from 'with-local-tmp-dir'
-import outputFiles from 'output-files'
 import { endent } from '@dword-design/functions'
+import execa from 'execa'
+import outputFiles from 'output-files'
 import pEvent from 'p-event'
 import stripAnsi from 'strip-ansi'
+import withLocalTmpDir from 'with-local-tmp-dir'
 
 export default {
-  confirm: () => withLocalTmpDir(async () => {
-    await outputFiles({
-      'ceiling.config.js': endent`
+  confirm: () =>
+    withLocalTmpDir(async () => {
+      await outputFiles({
+        'ceiling.config.js': endent`
         module.exports = {
           plugins: ['mongodb', 'mysql'],
           endpoints: {
@@ -23,31 +24,31 @@ export default {
           },
         }
       `,
-      node_modules: {
-        'ceiling-plugin-mongodb/index.js': endent`
-          module.exports = {
-            endpointToString: ({ host }) => \`mongodb://\${host}\`,
-          }
-        `,
-        'ceiling-plugin-mysql/index.js': endent`
-          module.exports = {
-            endpointToString: ({ host }) => \`mysql://\${host}\`,
-          }
-        `,
-      },
-      migrations: {
-        'mongodb/1-test.js': endent`
+        migrations: {
+          'mongodb/1-test.js': endent`
           module.exports = {
             up: ({ host }) => console.log(\`\${host}: mongodb up 1\`),
           }
         `,
-        'mysql/1-test.js': endent`
+          'mysql/1-test.js': endent`
           module.exports = {
             up: ({ host }) => console.log(\`\${host}: mysql up 1\`),
           }
         `,
-      },
-      'package.json': endent`
+        },
+        node_modules: {
+          'ceiling-plugin-mongodb/index.js': endent`
+          module.exports = {
+            endpointToString: ({ host }) => \`mongodb://\${host}\`,
+          }
+        `,
+          'ceiling-plugin-mysql/index.js': endent`
+          module.exports = {
+            endpointToString: ({ host }) => \`mysql://\${host}\`,
+          }
+        `,
+        },
+        'package.json': endent`
         {
           "devDependencies": {
             "ceiling-plugin-mongodb": "^1.0.0",
@@ -55,12 +56,14 @@ export default {
           }
         }
       `,
-    })
-    const childProcess = execa.command('ceiling migrate', { all: true })
-    await pEvent(childProcess.all, 'data')
-    childProcess.stdin.write('y\n')
-    const { all } = await childProcess
-    expect(all |> stripAnsi).toEqual(endent`
+      })
+      const childProcess = execa(require.resolve('./cli'), ['migrate'], {
+        all: true,
+      })
+      await pEvent(childProcess.all, 'data')
+      childProcess.stdin.write('y\n')
+      const output = await childProcess
+      expect(output.all |> stripAnsi).toEqual(endent`
       ? Are you sure you want to …
       mongodb://mongodb-local.de
         - 1-test
@@ -79,109 +82,122 @@ export default {
         - 1-test
       mysql-local.de: mysql up 1
     `)
-  }),
-  'executed migrations set': () => withLocalTmpDir(async () => {
-    await outputFiles({
-      'ceiling.config.js': endent`
+    }),
+  'executed migrations': () =>
+    withLocalTmpDir(async () => {
+      await outputFiles({
+        'ceiling.config.js': endent`
         module.exports = {
           plugins: ['mysql'],
         }
       `,
-      'node_modules/ceiling-plugin-mysql/index.js': endent`
-        module.exports = {
-          addExecutedMigrations: (endpoint, migrations) => console.log(\`Added executed migrations \${migrations.join(',')}\`),
-        }
-      `,
-      'migrations/mysql': {
-        '1-test.js': endent`
+        'migrations/mysql': {
+          '1-test.js': endent`
           module.exports = {
             up: () => console.log('up 1'),
           }
         `,
-      },
-      'package.json': endent`
+          '2-test2.js': endent`
+          module.exports = {
+            up: () => console.log('up 2'),
+          }
+        `,
+        },
+        'node_modules/ceiling-plugin-mysql/index.js': endent`
+        module.exports = {
+          getExecutedMigrations: () => ['1-test'],
+        }
+      `,
+        'package.json': endent`
         {
           "devDependencies": {
             "ceiling-plugin-mysql": "^1.0.0"
           }
         }
       `,
-    })
-    const { all } = await execa.command('ceiling migrate -y', { all: true })
-    expect(all).toEqual(endent`
+      })
+      const output = await execa(require.resolve('./cli'), ['migrate', '-y'], {
+        all: true,
+      })
+      expect(output.all).toEqual(endent`
+      Migrating undefined …
+        - 2-test2
+      up 2
+    `)
+    }),
+  'executed migrations set': () =>
+    withLocalTmpDir(async () => {
+      await outputFiles({
+        'ceiling.config.js': endent`
+        module.exports = {
+          plugins: ['mysql'],
+        }
+      `,
+        'migrations/mysql': {
+          '1-test.js': endent`
+          module.exports = {
+            up: () => console.log('up 1'),
+          }
+        `,
+        },
+        'node_modules/ceiling-plugin-mysql/index.js': endent`
+        module.exports = {
+          addExecutedMigrations: (endpoint, migrations) => console.log(\`Added executed migrations \${migrations.join(',')}\`),
+        }
+      `,
+        'package.json': endent`
+        {
+          "devDependencies": {
+            "ceiling-plugin-mysql": "^1.0.0"
+          }
+        }
+      `,
+      })
+      const output = await execa(require.resolve('./cli'), ['migrate', '-y'], {
+        all: true,
+      })
+      expect(output.all).toEqual(endent`
       Migrating undefined …
         - 1-test
       up 1
       Added executed migrations 1-test
     `)
-  }),
-  'executed migrations': () => withLocalTmpDir(async () => {
-    await outputFiles({
-      'ceiling.config.js': endent`
+    }),
+  'no migrations': () =>
+    withLocalTmpDir(async () => {
+      await outputFiles({
+        'ceiling.config.js': endent`
         module.exports = {
           plugins: ['mysql'],
         }
       `,
-      'node_modules/ceiling-plugin-mysql/index.js': endent`
-        module.exports = {
-          getExecutedMigrations: () => ['1-test'],
-        }
-      `,
-      'migrations/mysql': {
-        '1-test.js': endent`
-          module.exports = {
-            up: () => console.log('up 1'),
-          }
-        `,
-        '2-test2.js': endent`
-          module.exports = {
-            up: () => console.log('up 2'),
-          }
-        `,
-      },
-      'package.json': endent`
-        {
-          "devDependencies": {
-            "ceiling-plugin-mysql": "^1.0.0"
-          }
-        }
-      `,
-    })
-    const { all } = await execa.command('ceiling migrate -y', { all: true })
-    expect(all).toEqual(endent`
-      Migrating undefined …
-        - 2-test2
-      up 2
-    `)
-  }),
-  'no migrations': () => withLocalTmpDir(async () => {
-    await outputFiles({
-      'ceiling.config.js': endent`
-        module.exports = {
-          plugins: ['mysql'],
-        }
-      `,
-      'node_modules/ceiling-plugin-mysql/index.js': endent`
+        'node_modules/ceiling-plugin-mysql/index.js': endent`
         module.exports = {}
       `,
-      'package.json': endent`
+        'package.json': endent`
         {
           "devDependencies": {
             "ceiling-plugin-mysql": "^1.0.0"
           }
         }
       `,
-    })
-    const { all } = await execa.command('ceiling migrate -y', { all: true })
-    expect(all).toEqual('')
-  }),
-  'no plugins': () => withLocalTmpDir(async () => {
-    const { all } = await execa.command('ceiling migrate -y', { all: true })
-    expect(all).toEqual('No plugins specified. Doing nothing …')
-  }),
-  'two plugins': () => withLocalTmpDir(async () => {
-    await outputFiles({
-      'ceiling.config.js': endent`
+      })
+      const output = await execa(require.resolve('./cli'), ['migrate', '-y'], {
+        all: true,
+      })
+      expect(output.all).toEqual('')
+    }),
+  'no plugins': () =>
+    withLocalTmpDir(async () => {
+      const output = await execa(require.resolve('./cli'), ['migrate', '-y'], {
+        all: true,
+      })
+      expect(output.all).toEqual('No plugins specified. Doing nothing …')
+    }),
+  'two plugins': () =>
+    withLocalTmpDir(async () => {
+      await outputFiles({
+        'ceiling.config.js': endent`
         module.exports = {
           plugins: ['mongodb', 'mysql'],
           endpoints: {
@@ -196,31 +212,31 @@ export default {
           },
         }
       `,
-      node_modules: {
-        'ceiling-plugin-mongodb/index.js': endent`
-          module.exports = {
-            endpointToString: ({ host }) => \`mongodb://\${host}\`,
-          }
-        `,
-        'ceiling-plugin-mysql/index.js': endent`
-          module.exports = {
-            endpointToString: ({ host }) => \`mysql://\${host}\`,
-          }
-        `,
-      },
-      migrations: {
-        'mongodb/1-test.js': endent`
+        migrations: {
+          'mongodb/1-test.js': endent`
           module.exports = {
             up: ({ host }) => console.log(\`\${host}: mongodb up 1\`),
           }
         `,
-        'mysql/1-test.js': endent`
+          'mysql/1-test.js': endent`
           module.exports = {
             up: ({ host }) => console.log(\`\${host}: mysql up 1\`),
           }
         `,
-      },
-      'package.json': endent`
+        },
+        node_modules: {
+          'ceiling-plugin-mongodb/index.js': endent`
+          module.exports = {
+            endpointToString: ({ host }) => \`mongodb://\${host}\`,
+          }
+        `,
+          'ceiling-plugin-mysql/index.js': endent`
+          module.exports = {
+            endpointToString: ({ host }) => \`mysql://\${host}\`,
+          }
+        `,
+        },
+        'package.json': endent`
         {
           "devDependencies": {
             "ceiling-plugin-mongodb": "^1.0.0",
@@ -228,9 +244,11 @@ export default {
           }
         }
       `,
-    })
-    const { all } = await execa.command('ceiling migrate -y', { all: true })
-    expect(all).toEqual(endent`
+      })
+      const output = await execa(require.resolve('./cli'), ['migrate', '-y'], {
+        all: true,
+      })
+      expect(output.all).toEqual(endent`
       Migrating mongodb://mongodb-local.de …
         - 1-test
       mongodb-local.de: mongodb up 1
@@ -238,10 +256,11 @@ export default {
         - 1-test
       mysql-local.de: mysql up 1
     `)
-  }),
-  valid: () => withLocalTmpDir(async () => {
-    await outputFiles({
-      'ceiling.config.js': endent`
+    }),
+  valid: () =>
+    withLocalTmpDir(async () => {
+      await outputFiles({
+        'ceiling.config.js': endent`
         module.exports = {
           plugins: ['mysql'],
           endpoints: {
@@ -253,29 +272,31 @@ export default {
           },
         }
       `,
-      'node_modules/ceiling-plugin-mysql/index.js': endent`
-        module.exports = {
-          endpointToString: ({ host }) => \`mysql://\${host}\`,
-        }
-      `,
-      'migrations/mysql/1-test.js': endent`
+        'migrations/mysql/1-test.js': endent`
         module.exports = {
           up: ({ host }) => console.log(\`\${host}: up 1\`),
         }
       `,
-      'package.json': endent`
+        'node_modules/ceiling-plugin-mysql/index.js': endent`
+        module.exports = {
+          endpointToString: ({ host }) => \`mysql://\${host}\`,
+        }
+      `,
+        'package.json': endent`
         {
           "devDependencies": {
             "ceiling-plugin-mysql": "^1.0.0"
           }
         }
       `,
-    })
-    const { all } = await execa.command('ceiling migrate -y', { all: true })
-    expect(all).toEqual(endent`
+      })
+      const output = await execa(require.resolve('./cli'), ['migrate', '-y'], {
+        all: true,
+      })
+      expect(output.all).toEqual(endent`
       Migrating mysql://local.de …
         - 1-test
       local.de: up 1
     `)
-  }),
+    }),
 }
