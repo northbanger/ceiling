@@ -14,16 +14,16 @@
   ],
   "scripts": {
     "commit": "base commit",
-    "depgraph": "base depgraph",
+    "dev": "base dev",
+    "lint": "base lint",
     "prepare": "base prepare",
     "prepublishOnly": "base prepublishOnly",
-    "release": "base release",
     "test": "base test"
   },
   "dependencies": {
     "@dword-design/functions": "^2.6.3",
     "cosmiconfig": "^6.0.0",
-    "glob-promise": "^3.4.0",
+    "globby": "^11.0.1",
     "inquirer": "^7.0.4",
     "make-cli": "^1.0.4",
     "plugin-name-to-package-name": "^0.1.1",
@@ -37,5 +37,8 @@
     "p-event": "^4.1.0",
     "strip-ansi": "^6.0.0",
     "with-local-tmp-dir": "^2.2.5"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

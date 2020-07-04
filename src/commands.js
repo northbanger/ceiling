@@ -1,165 +1,218 @@
-import config from './config'
-import { map, pullAll, mapValues, values, join, keys, pickBy, isEmpty, promiseAll, endent, zipObject, property } from '@dword-design/functions'
-import glob from 'glob-promise'
-import P from 'path'
+import {
+  endent,
+  identity,
+  isEmpty,
+  join,
+  keys,
+  map,
+  mapValues,
+  pickBy,
+  promiseAll,
+  property,
+  pullAll,
+  sortBy,
+  values,
+  zipObject,
+} from '@dword-design/functions'
+import globby from 'globby'
 import inquirer from 'inquirer'
+import P from 'path'
 import { transform as pluginNameToPackageName } from 'plugin-name-to-package-name'
 import sequential from 'promise-sequential'
 
-const sync = async (operation, endpointName = 'live', { yes }) => {
-  const fromEndpoint = config.endpoints[operation === 'push' ? 'local' : endpointName]
-  const toEndpoint = config.endpoints[operation === 'push' ? endpointName : 'local']
-  if (!yes && !(await (async () => {
-    const hints = config.plugins
-      |> mapValues(
-        ({ endpointToString }, pluginName) => {
+import config from './config'
+
+const sync = async (operation, endpointName = 'live', options) => {
+  const fromEndpoint =
+    config.endpoints[operation === 'push' ? 'local' : endpointName]
+  const toEndpoint =
+    config.endpoints[operation === 'push' ? endpointName : 'local']
+  if (
+    !options.yes &&
+    !(await (async () => {
+      const hints =
+        config.plugins
+        |> mapValues((plugin, pluginName) => {
           const fromPluginConfig = fromEndpoint?.[pluginName]
           const toPluginConfig = toEndpoint?.[pluginName]
-          return `  - ${fromPluginConfig |> endpointToString} => ${toPluginConfig |> endpointToString}\n`
-        },
-      )
-      |> values
-      |> join('')
-    return inquirer.prompt({
-      name: 'confirm',
-      type: 'confirm',
-      message: endent`
+          return `  - ${fromPluginConfig |> plugin.endpointToString} => ${
+            toPluginConfig |> plugin.endpointToString
+          }\n`
+        })
+        |> values
+        |> join('')
+      return (
+        inquirer.prompt({
+          default: false,
+          message: endent`
         Are you sure you want to …
         ${hints}
       `,
-      default: false,
-    })
-      |> await
-      |> property('confirm')
-  })())) {
-    return
+          name: 'confirm',
+          type: 'confirm',
+        })
+        |> await
+        |> property('confirm')
+      )
+    })())
+  ) {
+    return undefined
   }
   if (config.plugins |> isEmpty) {
-    return console.log('No plugins specified. Doing nothing …')
+    console.log('No plugins specified. Doing nothing …')
+    return undefined
   }
-  return config.plugins
-    |> mapValues(({ endpointToString, sync }, pluginName) => {
+  return (
+    config.plugins
+    |> mapValues((plugin, pluginName) => {
       const fromPluginConfig = fromEndpoint?.[pluginName]
       const toPluginConfig = toEndpoint?.[pluginName]
-      console.log(`${endpointToString(fromPluginConfig)} => ${endpointToString(toPluginConfig)} …`)
-      return sync(fromPluginConfig, toPluginConfig)
+      console.log(
+        `${plugin.endpointToString(
+          fromPluginConfig
+        )} => ${plugin.endpointToString(toPluginConfig)} …`
+      )
+      return plugin.sync(fromPluginConfig, toPluginConfig)
     })
     |> values
     |> promiseAll
-    |> await
+  )
 }
 
 export default {
-  push: {
+  migrate: {
     arguments: '[endpoint]',
-    description: 'Push data to an endpoint or to all endpoints',
+    description: 'Migrate data at an endpoint',
+    handler: async (endpointName = 'local', options) => {
+      const endpoint = config.endpoints[endpointName]
+      const shortPluginNames =
+        globby('*', { cwd: 'migrations', onlyDirectories: true })
+        |> await
+        |> sortBy(identity)
+      const migrations =
+        zipObject(
+          shortPluginNames
+            |> map(shortName =>
+              pluginNameToPackageName(shortName, 'ceiling-plugin')
+            ),
+          shortPluginNames
+            |> map(async shortPluginName => {
+              const pluginName = pluginNameToPackageName(
+                shortPluginName,
+                'ceiling-plugin'
+              )
+              const pluginConfig = endpoint?.[pluginName]
+              const plugin = config.plugins[pluginName]
+              const executedMigrations =
+                pluginConfig |> plugin.getExecutedMigrations |> await
+              const migrationNames =
+                globby('*', { cwd: P.resolve('migrations', shortPluginName) })
+                |> await
+                |> sortBy(identity)
+                |> map(filename => P.basename(filename, '.js'))
+                |> pullAll(executedMigrations)
+              return zipObject(
+                migrationNames,
+                migrationNames
+                  |> map(filename =>
+                    require(P.resolve('migrations', shortPluginName, filename))
+                  )
+              )
+            })
+            |> promiseAll
+            |> await
+        ) |> pickBy(pluginMigrations => !(pluginMigrations |> isEmpty))
+      if (
+        !options.yes &&
+        !(await (async () => {
+          const hints =
+            migrations
+            |> mapValues((pluginMigrations, pluginName) => {
+              const plugin = config.plugins[pluginName]
+              return endent`
+                ${endpoint?.[pluginName] |> plugin.endpointToString}
+                  ${
+                    pluginMigrations
+                    |> keys
+                    |> map(name => `- ${name}`)
+                    |> join('\n')
+                  }
+              `
+            })
+            |> values
+            |> map(string => `${string}\n`)
+            |> join('')
+          return (
+            inquirer.prompt({
+              default: false,
+              message: endent`
+            Are you sure you want to …
+            ${hints}
+          `,
+              name: 'confirm',
+              type: 'confirm',
+            })
+            |> await
+            |> property('confirm')
+          )
+        })())
+      ) {
+        return
+      }
+      if (config.plugins |> isEmpty) {
+        console.log('No plugins specified. Doing nothing …')
+        return
+      }
+      const runPluginMigrations = async (pluginMigrations, pluginName) => {
+        const pluginConfig = config.endpoints[endpointName]?.[pluginName]
+        const plugin = config.plugins[pluginName]
+        console.log(`Migrating ${pluginConfig |> plugin.endpointToString} …`)
+        await (pluginMigrations
+          |> mapValues((migration, name) => () => {
+            console.log(`  - ${name}`)
+            return migration.up(pluginConfig |> plugin.getMigrationParams)
+          })
+          |> values
+          |> sequential)
+        return plugin.addExecutedMigrations(
+          pluginConfig,
+          pluginMigrations |> keys
+        )
+      }
+      await (migrations
+        |> mapValues((pluginMigrations, pluginName) => () =>
+          runPluginMigrations(pluginMigrations, pluginName)
+        )
+        |> values
+        |> sequential)
+    },
     options: [
       {
-        name: '-y, --yes',
         description: 'do not ask for confirmation',
+        name: '-y, --yes',
       },
     ],
-    handler: async (endpointName, options) => sync('push', endpointName, options),
   },
   pull: {
     arguments: '[endpoint]',
     description: 'Pull data from an endpoint or from all endpoints',
+    handler: (endpointName, options) => sync('pull', endpointName, options),
     options: [
       {
-        name: '-y, --yes',
         description: 'do not ask for confirmation',
+        name: '-y, --yes',
       },
     ],
-    handler: async (endpointName, options) => sync('pull', endpointName, options),
   },
-  migrate: {
+  push: {
     arguments: '[endpoint]',
-    description: 'Migrate data at an endpoint',
+    description: 'Push data to an endpoint or to all endpoints',
+    handler: (endpointName, options) => sync('push', endpointName, options),
     options: [
       {
-        name: '-y, --yes',
         description: 'do not ask for confirmation',
+        name: '-y, --yes',
       },
     ],
-    handler: async (endpointName = 'local', { yes }) => {
-      const endpoint = config.endpoints[endpointName]
-      const shortPluginNames = glob('*', { cwd: 'migrations' }) |> await
-      const migrations = zipObject(
-        shortPluginNames |> map(shortName => pluginNameToPackageName(shortName, 'ceiling-plugin')),
-        shortPluginNames
-          |> map(async shortPluginName => {
-            const pluginName = pluginNameToPackageName(shortPluginName, 'ceiling-plugin')
-            const pluginConfig = endpoint?.[pluginName]
-            const { getExecutedMigrations } = config.plugins[pluginName]
-            const executedMigrations = pluginConfig |> getExecutedMigrations |> await
-            const migrationNames = glob('*', { cwd: P.resolve('migrations', shortPluginName) })
-              |> await
-              |> map(filename => P.basename(filename, '.js'))
-              |> pullAll(executedMigrations)
-            return zipObject(
-              migrationNames,
-              migrationNames
-                |> map(filename => require(P.resolve('migrations', shortPluginName, filename))),
-            )
-          })
-          |> promiseAll
-          |> await,
-      )
-        |> pickBy(migrations => !(migrations |> isEmpty))
-
-      if (!yes && !(await (async () => {
-        const hints = migrations
-          |> mapValues(
-            (migrations, pluginName) => {
-              const { endpointToString } = config.plugins[pluginName]
-              return endent`
-                ${endpoint?.[pluginName] |> endpointToString}
-                  ${migrations |> keys |> map(name => `- ${name}`) |> join('\n')}
-              `
-            },
-          )
-          |> values
-          |> map(string => `${string}\n`)
-          |> join('')
-        return inquirer.prompt({
-          name: 'confirm',
-          type: 'confirm',
-          message: endent`
-            Are you sure you want to …
-            ${hints}
-          `,
-          default: false,
-        })
-          |> await
-          |> property('confirm')
-      })())) {
-        return
-      }
-      if (config.plugins |> isEmpty) {
-        return console.log('No plugins specified. Doing nothing …')
-      }
-
-      migrations
-        |> mapValues((pluginMigrations, pluginName) => async () => {
-          const pluginConfig = config.endpoints[endpointName]?.[pluginName]
-          const { endpointToString, addExecutedMigrations, getMigrationParams } = config.plugins[pluginName]
-
-          console.log(`Migrating ${pluginConfig |> endpointToString} …`)
-          pluginMigrations
-            |> mapValues(
-              ({ up }, name) => () => {
-                console.log(`  - ${name}`)
-                return up(pluginConfig |> getMigrationParams)
-              },
-            )
-            |> values
-            |> sequential
-            |> await
-          return addExecutedMigrations(pluginConfig, pluginMigrations |> keys)
-        })
-        |> values
-        |> sequential
-        |> await
-    },
   },
 }

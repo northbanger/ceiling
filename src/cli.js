@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 
+import { mapValues, omit, values } from '@dword-design/functions'
 import makeCli from 'make-cli'
+
 import commands from './commands'
-import { omit, mapValues, values } from '@dword-design/functions'
 
 makeCli({
-  commands: commands
+  commands:
+    commands
     |> mapValues((command, name) => ({
-      ...command |> omit('arguments'),
-      name: `${name}${command.arguments !== undefined ? ` ${command.arguments}` : ''}`,
+      ...(command |> omit('arguments')),
       handler: async (...args) => {
         try {
           return command.handler(...args) |> await
@@ -16,7 +17,11 @@ makeCli({
           console.log(error.message)
           process.exit(1)
         }
+        return undefined
       },
+      name: `${name}${
+        command.arguments === undefined ? '' : ` ${command.arguments}`
+      }`,
     }))
     |> values,
 })
