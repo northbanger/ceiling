@@ -1,3 +1,11 @@
+## [2.2.7](https://github.com/dword-design/ceiling/compare/v2.2.6...v2.2.7) (2020-08-23)
+
+
+### Bug Fixes
+
+* build files ([476ab99](https://github.com/dword-design/ceiling/commit/476ab9948a236dff60126d45ff00dfafc0f81723))
+* **deps:** update dependency cosmiconfig to v7 ([cb0edec](https://github.com/dword-design/ceiling/commit/cb0edec8a1eab407f059215c62393918d6dfdfbd))
+
 ## [2.2.6](https://github.com/dword-design/ceiling/compare/v2.2.5...v2.2.6) (2020-07-04)
 
 
